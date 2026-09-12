@@ -11,6 +11,18 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **Three stale or wrong details in the stack adapters**, found by reading all 1,333 lines of
+  reference content rather than only checking that the files resolve. `angular.md` built its
+  fixture on `HttpClientTestingModule`, deprecated since Angular 17 in favour of
+  `provideHttpClientTesting()`; `jvm.md` used the `Locale(String, String)` constructor, deprecated
+  since Java 19 in favour of `Locale.of`; and `rust.md`'s single-test command passed a bare name to
+  `cargo test --exact`, which matches the full path and so would not have run a test inside
+  `mod tests`. The rest of the content held up: the injection, authz, concurrency, boundary,
+  resource, environment and silent-wrongness families are accurate, and the Next.js adapter's
+  middleware-bypass guidance correctly cites CVE-2025-29927.
+- **`test_every_case_has_a_prompt_and_a_grader` treated any directory under `evals/` as a case.**
+  Latent until `evals/` first contained a `.py` file — adding `check_results.py` meant a
+  `__pycache__` could appear there, and the test then failed asserting it had no `prompt.md`.
 - **Every agent was told to load skills without being given the tool to load them.** All four
   agents open by instructing themselves to load `testmate-config`, `failure-triage`,
   `attack-catalog` and friends, and none declared `Skill` in `tools:`. Whether the runtime grants

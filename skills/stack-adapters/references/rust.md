@@ -83,7 +83,7 @@ The compiler removes whole families of bugs; aim at what it does not remove.
 | | |
 |---|---|
 | All | `cargo test` |
-| One test | `cargo test rejects_empty_filter_list -- --exact --nocapture` |
+| One test | `cargo test tests::rejects_empty_filter_list -- --exact --nocapture` — `--exact` matches the full path, so include the module |
 | One target | `cargo test --test integration_db` |
 | Release profile | `cargo test --release` (different overflow behaviour — run both) |
 | All features | `cargo test --all-features` and `--no-default-features` |

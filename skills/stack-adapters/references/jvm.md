@@ -73,7 +73,7 @@ Locale sensitivity — the Turkish-i case:
 void keywordCasingIsLocaleIndependent() {
     Locale original = Locale.getDefault();
     try {
-        Locale.setDefault(new Locale("tr", "TR"));
+        Locale.setDefault(Locale.of("tr", "TR"));   // new Locale(..) before Java 19
         assertThat(renderer.render(query)).contains("LIMIT");
     } finally {
         Locale.setDefault(original);

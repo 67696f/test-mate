@@ -202,8 +202,12 @@ class TestWiring(unittest.TestCase):
 
 class TestEvalSuite(unittest.TestCase):
     def test_every_case_has_a_prompt_and_a_grader(self):
+        # A case is a directory holding a prompt; "results" is output and anything
+        # starting with "." or "__" is tooling (a __pycache__ from check_results.py
+        # broke this the moment evals/ first contained a .py file).
         cases = [d for d in os.listdir(os.path.join(ROOT, "evals"))
-                 if os.path.isdir(os.path.join(ROOT, "evals", d)) and d != "results"]
+                 if os.path.isdir(os.path.join(ROOT, "evals", d))
+                 and d != "results" and not d.startswith((".", "__"))]
         self.assertTrue(cases, "no eval cases found")
         for case in cases:
             with self.subTest(case=case):
@@ -217,7 +221,7 @@ class TestEvalSuite(unittest.TestCase):
 
     def test_prompts_and_graders_have_frontmatter(self):
         for base, _, files in os.walk(os.path.join(ROOT, "evals")):
-            if "results" in base:
+            if "results" in base or "__pycache__" in base:
                 continue
             for name in files:
                 if not name.endswith(".md") or name == "README.md":

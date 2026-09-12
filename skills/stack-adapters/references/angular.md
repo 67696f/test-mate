@@ -32,8 +32,7 @@ describe('UserService', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-      imports: [HttpClientTestingModule],
-      providers: [UserService],
+      providers: [UserService, provideHttpClient(), provideHttpClientTesting()],
     });
     service = TestBed.inject(UserService);
     http = TestBed.inject(HttpTestingController);
@@ -42,6 +41,9 @@ describe('UserService', () => {
   afterEach(() => http.verify());   // fails the test on an unexpected or missing request
 });
 ```
+
+On Angular 16 and earlier use `imports: [HttpClientTestingModule]` instead — it is deprecated from
+17 onward in favour of the two providers above. Match whichever the repository already uses.
 
 `http.verify()` in `afterEach` is non-negotiable — without it a test can pass while the code issues
 requests nobody asserted.
