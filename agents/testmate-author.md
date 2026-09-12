@@ -48,8 +48,11 @@ Load `test-conventions`, `test-strategy`, and the `stack-adapters` reference for
   the type alone could be produced by an unrelated fault.
 - **Assert the absence too.** After a refusal: nothing was executed, nothing was mutated, no
   collaborator was called, no resource was allocated.
-- **No conditionals in tests.** An `if` in a test means two tests, or an assertion you are afraid
-  to make. Parameterize instead.
+- **No control flow in tests.** No `if`, no loop, no `switch`, no `try/catch` used as flow. An `if`
+  means two tests, or an assertion you are afraid to make; a loop over inputs means a
+  **parameterized test** (`@ParameterizedTest`, `@pytest.mark.parametrize`, a table-driven subtest,
+  `it.each`) — write that instead. A loop hides which input failed and stops at the first failure,
+  so it reports one defect where there may be five.
 - **Literal expected values.** Never compute the expectation with the same logic the code uses —
   that test passes even when both are wrong.
 - **Comment only the non-obvious.** A one-line comment explaining *why* an odd input matters is

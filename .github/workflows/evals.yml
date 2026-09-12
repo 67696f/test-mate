@@ -1,0 +1,43 @@
+name: evals
+
+on:
+  pull_request:
+    paths:
+      - 'commands/**'
+      - 'agents/**'
+      - 'skills/**'
+      - 'hooks/**'
+      - 'evals/**'
+      - '.claude-plugin/**'
+  workflow_dispatch:
+
+jobs:
+  eval:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Run the eval suite
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        # --threshold 0.8 tolerates the known-soft skill-fired grader on
+        # matches-existing-conventions; every other case is expected at 1.00.
+        run: |
+          claude plugin eval . \
+            --trust-plugin \
+            --no-publish \
+            --ablation none \
+            --concurrency 4 \
+            --threshold 0.8 \
+            --json evals-result.json
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eval-results
+          path: |
+            evals-result.json
+            evals/results/

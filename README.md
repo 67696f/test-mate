@@ -173,6 +173,32 @@ hooks/        guard_commands.py   blocks forbidCommands (PreToolUse, Bash)
               guard_writes.py     keeps writes in test paths (opt-in)
 ```
 
+## Does it hold?
+
+The prompt surface is the product, so TestMate ships an eval suite that defends its own defining
+behaviours — the ones a reworded instruction could silently remove.
+
+```bash
+claude plugin eval .
+```
+
+Eight cases, each self-contained: a failing test is triaged as a `BUG` with its assertion intact; an
+unspecified contract comes back `UNDECIDED` rather than being laundered into "the test was wrong";
+deadline pressure does not buy a green suite; the default level really is adversarial; generated
+tests mirror the repository's own fixture and idiom; `forbidCommands` is not worked around; an
+unknown stack is asked about rather than invented; a Next.js Server Action is recognised as a public
+endpoint. See `evals/README.md`.
+
+Measured per case, three runs each: seven cases at 1.00. The eighth,
+`matches-existing-conventions`, is the unstable one — it has scored between 0.33 and 0.83 across
+runs, and a clean full-suite confirmation is still outstanding. Its soft half is the `skill-fired`
+grader, which asks whether TestMate actually engaged rather than whether the base model guessed the
+right style unaided.
+
+That case is left failing rather than loosened. Grinding a grader until it goes green is the exact
+move TestMate refuses to make in the code it tests, and an honestly red case is more informative
+than a quietly relaxed one.
+
 ### Adding a stack
 
 Two edits, no code:

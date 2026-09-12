@@ -1,6 +1,6 @@
 ---
 name: test-conventions
-description: How TestMate learns a repository's existing test style — naming, fixtures, assertion library, structure — so generated tests read as if the team wrote them. Load before writing any test file into an existing project.
+description: Learn and match a repository's existing test style — naming, display names, fixtures and base classes, assertion library, parameterization, structure — so generated tests read as if the team wrote them. Load BEFORE writing or adding any test, spec or test case to a project that already has tests, and whenever the request mentions matching, following or fitting the existing tests, style or conventions.
 ---
 
 # Learning the repository's test conventions
@@ -23,6 +23,7 @@ Read 2–4 of the largest existing test files (largest = most conventions per re
 | **Fixture** | A shared abstract base class? A `@BeforeEach`? A pytest fixture? A builder? **Reuse it — do not invent a parallel one.** |
 | **Mocking** | Which library, and whether the team prefers real objects over mocks. |
 | **Granularity** | One assertion concern per test, or several? Follow the majority. |
+| **Parameterization** | How the repo runs one body over many inputs — `@ParameterizedTest`, `parametrize`, table-driven subtests, `it.each`. Use it instead of a loop inside a test. |
 | **Comments** | Do tests carry a short comment explaining *why* a non-obvious case exists? Match the density. |
 | **Grouping** | Nested classes / `describe` blocks / `// --- section ---` banners? |
 
