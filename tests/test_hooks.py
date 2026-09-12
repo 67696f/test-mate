@@ -19,9 +19,15 @@ ALLOW, DENY, ASK = "allow", "deny", "ask"
 
 
 def run_guard(script, payload):
-    """Invoke a guard with a payload; return (decision, message).
+    """Invoke a guard with a payload; return (decision, reason).
 
     A guard that exits silently is an approval — that is the contract with the harness.
+
+    The returned payload is checked against the harness contract, not merely against what
+    the guards happen to emit: hookSpecificOutput is a discriminated union keyed on
+    hookEventName, so an object without it fails validation and the decision is dropped.
+    A guard that cannot be heard is not a guard, so that check belongs here, where every
+    deny and ask case runs through it.
     """
     proc = subprocess.run(
         [sys.executable, os.path.join(HOOKS, script)],
@@ -32,7 +38,19 @@ def run_guard(script, payload):
     if not proc.stdout.strip():
         return ALLOW, ""
     out = json.loads(proc.stdout)
-    return out["hookSpecificOutput"]["permissionDecision"], out.get("systemMessage", "")
+    specific = out["hookSpecificOutput"]
+    if specific.get("hookEventName") != "PreToolUse":
+        raise AssertionError(
+            f"{script} emitted hookSpecificOutput with hookEventName="
+            f"{specific.get('hookEventName')!r}; Claude Code requires \"PreToolUse\" or it "
+            f"discards the decision")
+    decision = specific["permissionDecision"]
+    reason = specific.get("permissionDecisionReason", "")
+    if not reason:
+        raise AssertionError(
+            f"{script} returned {decision} with no permissionDecisionReason; the model "
+            f"never sees systemMessage, so the decision would arrive unexplained")
+    return decision, reason
 
 
 class GuardTestCase(unittest.TestCase):

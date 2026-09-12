@@ -30,12 +30,34 @@ jobs:
       - name: Hooks compile and are stdlib-only
         run: |
           python3 -m compileall -q hooks/
-          # Any third-party import would break on a user's machine.
-          if grep -rnE '^\s*(import|from)\s+(?!json|os|re|sys|fnmatch|tempfile|subprocess|unittest)' \
-              --include='*.py' -P hooks/; then
-            echo "::error::hooks must import stdlib only"
-            exit 1
-          fi
+          # Any third-party import would break on a user's machine. Parsed with ast
+          # rather than grepped: the previous grep passed -E and -P together, which GNU
+          # grep rejects with exit 2, and `if grep ...` reads a nonzero exit as "clean",
+          # so the gate was green no matter what the hooks imported.
+          python3 - <<'EOF'
+          import ast, pathlib, sys
+
+          ALLOWED = {"json", "os", "re", "sys", "fnmatch"}
+          bad = []
+          for path in sorted(pathlib.Path("hooks").rglob("*.py")):
+              tree = ast.parse(path.read_text(), filename=str(path))
+              for node in ast.walk(tree):
+                  if isinstance(node, ast.Import):
+                      names = [a.name for a in node.names]
+                  elif isinstance(node, ast.ImportFrom):
+                      names = [node.module or ""]
+                  else:
+                      continue
+                  for name in names:
+                      # Compare the top-level package: "os.path" is os, and "requests"
+                      # is not "re" -- the old lookahead matched on prefix and let
+                      # requests, redis and friends through.
+                      if name.split(".")[0] not in ALLOWED:
+                          bad.append(f"{path}:{node.lineno}: {name}")
+          for entry in bad:
+              print(f"::error::hooks must import stdlib only -- {entry}")
+          sys.exit(1 if bad else 0)
+          EOF
 
       - name: Manifests parse
         run: |

@@ -15,8 +15,16 @@ import sys
 
 
 def emit(decision, message):
+    # hookSpecificOutput is a discriminated union keyed on hookEventName: without it the
+    # whole object fails validation and the decision is silently dropped. The reason must
+    # be in permissionDecisionReason -- that is the field the model reads; systemMessage
+    # only reaches the user.
     json.dump({
-        "hookSpecificOutput": {"permissionDecision": decision},
+        "hookSpecificOutput": {
+            "hookEventName": "PreToolUse",
+            "permissionDecision": decision,
+            "permissionDecisionReason": message,
+        },
         "systemMessage": message,
     }, sys.stdout)
     sys.exit(0)

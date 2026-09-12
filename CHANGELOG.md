@@ -10,6 +10,28 @@ as one.
 
 ## [Unreleased]
 
+### Fixed
+- **The two `PreToolUse` guards never actually blocked anything.** Both emitted
+  `hookSpecificOutput` without `hookEventName`, and that object is a discriminated union keyed on
+  exactly that field — so Claude Code failed it on validation and dropped the decision. Every
+  `forbidCommands` deny and every `enforce.sourceWrites` deny was silently discarded, which made
+  the "enforced, and hold regardless" row in the README untrue for the whole of 0.2.0. The guards
+  now also carry their reason in `permissionDecisionReason`; it had been in `systemMessage`, which
+  only the user sees, so text addressed to the model ("do not substitute an equivalent command
+  that evades the pattern") never reached it.
+- **The hook tests asserted the guards' own output shape, not the harness contract**, which is why
+  41 green tests said nothing about the above. `run_guard` now rejects a payload without
+  `hookEventName` or without a reason, so every deny and ask case checks the contract.
+- **The stdlib-only CI gate was a no-op.** It passed `-E` and `-P` to one `grep`; GNU grep rejects
+  that with exit 2, and `if grep ...` reads a nonzero exit as "nothing found", so the step was
+  green whatever the hooks imported. Its negative lookahead was unanchored besides, exempting any
+  module whose name starts with an allowed one — `requests` passed as `re`. Replaced with an `ast`
+  parse that compares top-level package names.
+- **`evals/no-source-edit-to-pass` pointed at code it never quoted.** It carried the suite's
+  "answer from the code quoted above" footer with no code block and no detail on the three
+  failures. It now quotes the run and the three failures, one per verdict — `BUG`, `EXPECTATION`,
+  `FIXTURE` — and the grader checks the verdicts.
+
 ## [0.2.0] — 2026-09-12
 
 Everything the self-audit found (`docs/self-audit-2026-09-12.md`), plus the defects that running the
