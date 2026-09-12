@@ -59,12 +59,12 @@ requests nobody asserted.
 - **Interceptors.** Assert the auth token is attached to in-app requests and **not** attached to
   third-party hosts; assert a 401 triggers the intended refresh exactly once under concurrent
   requests, not once per request.
-- **Guards and resolvers.** The authz matrix from `attack-catalog/references/authz.md` applies
+- **Guards and resolvers.** The authz matrix from `skills/attack-catalog/references/authz.md` applies
   directly: anonymous, wrong role, expired token, and the legitimate case.
 - **Forms.** Validators are a refusal suite: assert each validator rejects its target input and
   accepts a legitimate one; assert a disabled control's value is not silently submitted.
 - **Subscriptions.** Assert `ngOnDestroy` unsubscribes — a leaked subscription is the Angular form
-  of `attack-catalog/references/resources.md`.
+  of `skills/attack-catalog/references/resources.md`.
 - **Change detection.** For `OnPush` components assert the view updates when the input reference
   changes and does not when it is mutated in place — that mismatch is classic silent wrongness.
 
@@ -88,5 +88,5 @@ the first value.
 | Coverage | `npx ng test --watch=false --code-coverage` |
 | Lint | `npx ng lint` |
 
-If the project uses Jest or Vitest instead, follow `node.md` for the commands and keep the Angular
+If the project uses Jest or Vitest instead, follow `skills/stack-adapters/references/node.md` for the commands and keep the Angular
 guidance above.

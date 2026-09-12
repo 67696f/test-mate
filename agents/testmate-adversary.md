@@ -1,7 +1,7 @@
 ---
 name: testmate-adversary
 description: Models the attack surface of specific source files and produces a ranked list of concrete test cases designed to break them — injection, authz bypass, boundaries, concurrency, resource leaks, environment variance, silent wrongness. Read-only; it designs cases, it does not write test files.
-tools: Read, Grep, Glob
+tools: Read, Grep, Glob, Skill
 model: opus
 ---
 

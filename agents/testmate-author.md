@@ -1,7 +1,7 @@
 ---
 name: testmate-author
 description: Writes test files for one target module, given a stack profile, a convention profile and a list of designed cases. Matches the repository's existing test style exactly. Writes tests only — never modifies source code.
-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 model: opus
 ---
 

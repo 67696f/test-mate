@@ -43,7 +43,7 @@ Everything above, plus an attempt to *break* the code. Drive this from `attack-c
   This is the highest-value category and the one most suites omit. Model it on a
   dedicated `…SafetyTest` / `…_safety` file per module.
 - Injection families relevant to the code under test (SQL, command, path, template, header,
-  deserialization, log). See `attack-catalog/references/injection.md`.
+  deserialization, log). See `skills/attack-catalog/references/injection.md`.
 - Authorization bypass: same operation as a different principal, missing principal, and a
   principal whose scope was checked on one field but applied to another.
 - Concurrency: two callers racing the same mutable state; check-then-act (TOCTOU) windows.

@@ -18,7 +18,7 @@ Detect by build manifest first, then confirm with the test tree and lockfiles.
 |---|---|---|
 | `pom.xml`, `build.gradle{,.kts}` | Java / Kotlin / JVM (Spring Boot if the starter is present) | `references/jvm.md` |
 | `angular.json` | Angular | `references/angular.md` |
-| `next.config.*` or `next` in `package.json` | Next.js (read `node.md` too) | `references/nextjs.md` |
+| `next.config.*` or `next` in `package.json` | Next.js (read `references/node.md` too) | `references/nextjs.md` |
 | `package.json` without either of the above | Node / React / TypeScript | `references/node.md` |
 | `pyproject.toml`, `setup.py`, `requirements.txt` | Python | `references/python.md` |
 | `go.mod` | Go | `references/go.md` |

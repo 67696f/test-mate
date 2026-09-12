@@ -107,9 +107,11 @@ obligations rather than hints:
 
 - **`forbidCommands`** is checked before every shell command, in the commands and in every agent
   that can run one. A match is not run, is reported, and is not worked around with an equivalent
-  command that evades the pattern. Matching is substring-based and over-matches on purpose — `git
-  push` also blocks `echo "git push"` — because a false block costs a sentence and a false allow
-  deploys to production. Keep entries specific: `npm publish`, not `npm`.
+  command that evades the pattern. The line is split on `&&`, `||`, `;` and `|` and every command it
+  would run is checked, so `cd /repo && git push` is caught — while `echo "git push"` is not, since
+  printing a string is not running it. That exemption drops away wherever data can become a command:
+  `echo $(git push)` and `bash -c 'git push'` are both blocked. Keep entries specific: `npm
+  publish`, not `npm`.
 - **`exclude`** filters targets during selection, ranking and writing. An excluded path named
   explicitly gets a question, not silent obedience either way.
 - **`reportDir`** is the only place reports go; no path is hardcoded.
@@ -137,7 +139,8 @@ And TestMate does not edit your source code unless you explicitly ask it to.
 
 Be clear about which is which. Most of the above is **instructed** — it lives in the agent
 definitions and the model follows it. The agents are scoped as tightly as their job allows
-(`testmate-adversary` holds only `Read`, `Grep` and `Glob`, so its read-only posture is structural),
+(`testmate-adversary` holds only `Read`, `Grep`, `Glob` and `Skill` — none of which can write, so
+its read-only posture is structural),
 but the author agent must be able to write test files, and no tool grants write access to one
 subtree only. So "never edits your source" is a rule the model obeys, not a wall it cannot cross.
 

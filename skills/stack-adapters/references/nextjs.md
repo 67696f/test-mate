@@ -1,6 +1,6 @@
 # Next.js
 
-Read `node.md` first — runner, assertions, Testing Library, MSW and the Node service hazards all
+Read `skills/stack-adapters/references/node.md` first — runner, assertions, Testing Library, MSW and the Node service hazards all
 apply. This file covers what is specific to Next.js, which is where most of the real findings are.
 
 ## Detection
@@ -17,7 +17,7 @@ because it changes almost everything:
 
 | Layer | What | How |
 |---|---|---|
-| Pure logic, `lib/`, utils | unit | Vitest or Jest, per `node.md` |
+| Pure logic, `lib/`, utils | unit | Vitest or Jest, per `skills/stack-adapters/references/node.md` |
 | Client Components (`'use client'`) | unit | Testing Library + `userEvent` |
 | Route handlers (`app/**/route.ts`) | unit | import the exported `GET`/`POST` and call it with a `Request` |
 | Server Actions | unit | **import the action and call it directly** — see below |
@@ -54,7 +54,7 @@ it("refuses a caller who does not own the project", async () => {
 ```
 
 Write this pair for **every** exported Server Action. Then apply the rest of
-`attack-catalog/references/authz.md`: mass assignment through the `FormData`, an id in the payload
+`skills/attack-catalog/references/authz.md`: mass assignment through the `FormData`, an id in the payload
 that differs from the one authorized, and a legitimate caller proving the action still works.
 
 Also assert every action validates its input — `FormData` values are `string | File`, never the
@@ -161,7 +161,7 @@ consumers are wrapped in `<Suspense>` — the missing boundary only fails at bui
 
 | | |
 |---|---|
-| Unit | `npx vitest run` / `npx jest` (see `node.md` for the package-manager form) |
+| Unit | `npx vitest run` / `npx jest` (see `skills/stack-adapters/references/node.md` for the package-manager form) |
 | One file | `npx vitest run app/projects/actions.test.ts` |
 | E2E | `npx playwright test` |
 | One E2E | `npx playwright test e2e/auth.spec.ts --project=chromium` |

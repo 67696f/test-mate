@@ -1,7 +1,7 @@
 ---
 name: testmate-recon
 description: Profiles a project for TestMate — detects the language, build tool and test stack, extracts the repository's existing test conventions, and ranks source files by testing risk. Read-only. Use before generating any tests.
-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash, Skill
 model: sonnet
 ---
 

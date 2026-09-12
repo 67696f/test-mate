@@ -54,7 +54,7 @@ exception guarantee where it is claimed — the object is unchanged after a fail
 - **Format strings.** A caller-controlled format argument to any `printf` family function.
 - **NULL parameters.** Every pointer parameter, passed NULL. Assert a documented refusal or a
   documented precondition — not a segfault.
-- **Concurrency.** TSan plus the shapes in `attack-catalog/references/concurrency.md`.
+- **Concurrency.** TSan plus the shapes in `skills/attack-catalog/references/concurrency.md`.
 
 ## Sanitizers — the core of the run
 

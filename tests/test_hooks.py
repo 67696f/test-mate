@@ -141,6 +141,62 @@ class TestForbidCommands(GuardTestCase):
         self.assertEqual(self.decide(command="ls")[0], ALLOW)
         self.assertEqual(self.decide(command="mvn deploy")[0], DENY)
 
+    # --- data vs. execution -----------------------------------------------------------------
+
+    def test_pattern_as_data_is_not_a_command(self):
+        """`echo "git push"` prints a string; it does not push.
+
+        Matching is still substring-based inside each segment. What changed is that a
+        segment whose command only reads or prints its arguments is not treated as
+        running them.
+        """
+        self.write_config({"forbidCommands": ["git push", "npm publish"]})
+        for command in [
+            'echo "git push"',
+            'grep -r "git push" docs/',
+            'printf "run npm publish to release"',
+            'cat README.md | grep "mvn deploy"',
+            'rg "npm publish" --files-with-matches',
+        ]:
+            with self.subTest(command=command):
+                self.assertEqual(self.decide(command=command)[0], ALLOW)
+
+    def test_inert_command_does_not_launder_a_later_segment(self):
+        """An allowed segment must not cover for a forbidden one beside it."""
+        self.write_config({"forbidCommands": ["git push", "npm publish"]})
+        for command in [
+            'echo "starting" && git push',
+            'echo "x"; npm publish',
+            'true || git push',
+            'cat notes.md | grep foo && git push',
+        ]:
+            with self.subTest(command=command):
+                self.assertEqual(self.decide(command=command)[0], DENY)
+
+    def test_command_substitution_defeats_the_exemption(self):
+        """`echo $(git push)` RUNS git push. Data becomes a command here."""
+        self.write_config({"forbidCommands": ["git push"]})
+        for command in [
+            'echo $(git push)',
+            'echo `git push`',
+            'echo ${x:-$(git push)}',
+            'diff <(git push) /dev/null',
+        ]:
+            with self.subTest(command=command):
+                self.assertEqual(self.decide(command=command)[0], DENY)
+
+    def test_interpreter_is_not_inert(self):
+        """bash/sh run their arguments, so the exemption must not reach them."""
+        self.write_config({"forbidCommands": ["npm publish"]})
+        for command in ["bash -c 'npm publish'", 'sh -c "npm publish"',
+                        'xargs npm publish']:
+            with self.subTest(command=command):
+                self.assertEqual(self.decide(command=command)[0], DENY)
+
+    def test_absolute_path_to_a_forbidden_command_denied(self):
+        self.write_config({"forbidCommands": ["git push"]})
+        self.assertEqual(self.decide(command="/usr/bin/git push origin main")[0], DENY)
+
     # --- malformed configuration ------------------------------------------------------------
 
     def test_unparseable_config_asks(self):

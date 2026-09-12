@@ -14,6 +14,73 @@ import os
 import sys
 
 
+# Commands whose arguments are data, not instructions. A forbidden string appearing only
+# as an argument to one of these is being printed or searched for, not run.
+INERT_COMMANDS = frozenset({
+    "echo", "printf", "cat", "grep", "egrep", "fgrep", "rg", "ag", "ack",
+    "head", "tail", "less", "more", "wc", "comm", "diff",
+})
+
+# Anything that can turn data back into a running command. If a segment contains one of
+# these, the inert-command exemption does not apply: `echo $(git push)` runs git push, and
+# a guard fooled by that is worse than no guard.
+SUBSTITUTION = ("$(", "`", "${", "<(", ">(")
+
+# Shell operators that separate one command from the next.
+SEPARATORS = ("&&", "||", ";", "|", "&", "\n")
+
+
+def split_segments(command):
+    """Split a command line into the individual commands it runs.
+
+    Deliberately crude. It does not parse quoting, so a separator inside a quoted string
+    splits too -- which errs toward MORE segments and therefore more chances to match, the
+    safe direction for a guard.
+    """
+    segments = [command]
+    for sep in SEPARATORS:
+        nxt = []
+        for part in segments:
+            nxt.extend(part.split(sep))
+        segments = nxt
+    return [" ".join(s.split()) for s in segments if s.strip()]
+
+
+def leading_command(segment):
+    """The command a segment actually runs, past any VAR=value prefixes."""
+    for token in segment.split():
+        if "=" in token and not token.startswith("="):
+            name = token.split("=", 1)[0]
+            if name and all(c.isalnum() or c == "_" for c in name):
+                continue    # an environment assignment, not the command
+        return os.path.basename(token).lower()
+    return ""
+
+
+def segment_matches(segment, pattern):
+    if any(mark in segment for mark in SUBSTITUTION):
+        # Data can become a command here; fall back to the broad check.
+        return pattern.lower() in segment.lower()
+    if leading_command(segment) in INERT_COMMANDS:
+        # The pattern is an argument being printed or searched for, not executed.
+        return False
+    return pattern.lower() in segment.lower()
+
+
+def matches(command, pattern):
+    """True if any command the line runs matches the forbidden entry.
+
+    Matching stays substring-based within each segment: an entry of `git push` still
+    blocks `git push --force origin main`, and still blocks it inside `bash -c '...'`,
+    because bash is not an inert command. What it no longer blocks is the pattern
+    appearing purely as data -- `echo "git push"`, `grep -r "npm publish" docs/`.
+    """
+    if any(ch in pattern for ch in "*?["):
+        if fnmatch.fnmatch(command, pattern) or fnmatch.fnmatch(command, f"*{pattern}*"):
+            return True
+    return any(segment_matches(seg, pattern) for seg in split_segments(command))
+
+
 def emit(decision, message):
     # hookSpecificOutput is a discriminated union keyed on hookEventName: without it the
     # whole object fails validation and the decision is silently dropped. The reason must
@@ -83,16 +150,12 @@ def main():
 
     # Normalise whitespace so that a reformatted command cannot slip past a pattern.
     normalised = " ".join(str(command).split())
-    lowered = normalised.lower()
 
     for entry in forbidden:
         if not isinstance(entry, str) or not entry.strip():
             continue
         pattern = " ".join(entry.split())
-        matched = pattern.lower() in lowered
-        if not matched and any(ch in pattern for ch in "*?["):
-            matched = fnmatch.fnmatch(normalised, pattern) or fnmatch.fnmatch(
-                normalised, f"*{pattern}*")
+        matched = matches(normalised, pattern)
         if matched:
             emit("deny",
                  f"TestMate blocked this command: it matches forbidCommands entry "

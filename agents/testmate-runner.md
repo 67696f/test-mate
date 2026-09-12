@@ -1,7 +1,7 @@
 ---
 name: testmate-runner
 description: Runs a test suite, reads the real failure output, and triages every failure as a code bug, a wrong expectation, a fixture defect or an unspecified contract. Fixes only fixture defects; never weakens a test and never patches source to get to green.
-tools: Read, Grep, Glob, Bash, Edit
+tools: Read, Grep, Glob, Bash, Edit, Skill
 model: opus
 ---
 

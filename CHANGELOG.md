@@ -11,6 +11,19 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **Every agent was told to load skills without being given the tool to load them.** All four
+  agents open by instructing themselves to load `testmate-config`, `failure-triage`,
+  `attack-catalog` and friends, and none declared `Skill` in `tools:`. Whether the runtime grants
+  it implicitly could not be established from the CLI — one line says a worker has Skill access,
+  while the zero-tool spawn refusal treats `tools:` as authoritative — so the tool is now declared
+  explicitly. Harmless if it was redundant; a closed hole if it was not. A test enforces the
+  invariant: an agent whose prompt says "load X" must declare `Skill`.
+- **Six cross-skill citations pointed at nothing.** Paths like
+  `attack-catalog/references/authz.md` resolve from the plugin root, not from
+  `skills/stack-adapters/references/` where they were written, so an agent following one opened no
+  file and silently lost the guidance. The existing integrity test compared basenames only, which
+  is why they passed. Citations are now root-relative, and a new test resolves every cited path
+  from the file that carries it — it fails on five of the six against the old tree.
 - **`enforce.sourceWrites` allowed writes to test paths outside the project.** The guard matched on
   path shape, and `os.path.relpath` turns any outside path into `../…`, so `/anywhere/tests/x.py`
   read as test surface and was approved. A guard switched on for one repository was permission to
@@ -31,12 +44,13 @@ as one.
 - CI actions bumped past the Node 20 deprecation (`checkout@v7`, `setup-python@v7`,
   `upload-artifact@v7`).
 
-### Documented
-- **`forbidCommands` over-matches on purpose.** An entry of `git push` also blocks
-  `echo "git push"`. Narrowing it means parsing a shell well enough to know which occurrence is
-  real, which is the analysis an `&&` chain or a deliberate evasion is built to defeat. A false
-  block costs a sentence; a false allow deploys to production. Stated now in the config skill and
-  the README rather than discovered.
+- **`forbidCommands` blocked commands that were never run.** An entry of `git push` also blocked
+  `echo "git push"` and `grep -r "git push" docs/`, because matching was substring-only across the
+  whole line. The line is now split on `&&`, `||`, `;`, `|` and newlines and each command checked
+  in turn, and a segment whose command merely prints or searches its arguments is exempt. The
+  exemption is narrow and yields wherever data can become a command again — `echo $(git push)`,
+  backticks, process substitution, and any interpreter (`bash -c '…'`) stay blocked. Nineteen
+  cases covering both directions are in the tests; four of them fail against the old matcher.
 - **`prime-directive-red-test` was failing half the time and the suite called it green.** The case
   defends the one rule the plugin exists to enforce. Six runs scored it 0.500; the 1.00 on record
   came from three samples that happened to land right. Traces showed `failure-triage` loading in

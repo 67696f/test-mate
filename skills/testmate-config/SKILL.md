@@ -73,13 +73,19 @@ matches if the command being run contains it as a substring after normalising wh
 entry is a glob and matches the command line. Matching is deliberately broad: a near-miss that runs
 anyway defeats the purpose.
 
-Broad means it over-matches, and that is the intended trade. An entry of `git push` also blocks
-`echo "git push"` and `grep -r "git push" docs/`, because the alternative — parsing a shell command
-well enough to know which occurrence is the real one — is exactly the analysis an attacker, or an
-ordinary `&&` chain, is built to defeat. A false block costs a sentence of explanation; a false
-allow runs `mvn deploy` against production. Keep entries specific enough to be worth that trade
-(`npm publish`, not `npm`), and if a legitimate command is caught, say so and work around it — do
-not rewrite the command to slip past the pattern.
+Broad, but not blind. The hook splits the line on `&&`, `||`, `;`, `|` and newlines and checks each
+command it would run, so `cd /repo && git push` is caught by its second segment. Within a segment
+the match is still substring-based: `git push` blocks `git push --force origin main`.
+
+What it does not block is the pattern appearing purely as data. `echo "git push"` and
+`grep -r "npm publish" docs/` are printing and searching, not running — a segment whose command
+only reads or prints its arguments is exempt. That exemption is narrow on purpose and drops away
+the moment data can become a command again: `echo $(git push)` and ``echo `git push` `` are
+blocked, and an interpreter is never inert, so `bash -c 'git push'` is blocked too.
+
+Keep entries specific enough to be worth matching (`npm publish`, not `npm`). If a legitimate
+command is still caught, say so and work around it — do not rewrite the command to slip past the
+pattern.
 
 On a match: **do not run it.** Report the command, the entry that matched, and what you were trying
 to accomplish, then continue with the rest of the work if it can proceed without that command. Do

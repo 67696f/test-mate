@@ -97,6 +97,6 @@ Verdicts: <b> BUG · <e> EXPECTATION · <u> UNDECIDED · <x> FIXTURE (resolved)
 ```
 
 Order findings by severity, then by blast radius. Security findings (anything from
-`attack-catalog/references/injection.md` or `authz.md`) outrank correctness findings at equal
+`skills/attack-catalog/references/injection.md` or `skills/attack-catalog/references/authz.md`) outrank correctness findings at equal
 severity. A run that found nothing says so plainly and lists what it probed, so the user can judge
 whether the probe was good enough.

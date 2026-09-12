@@ -122,6 +122,45 @@ class TestWiring(unittest.TestCase):
             with self.subTest(reference=cited):
                 self.assertIn(cited, on_disk, f"references/{cited} is cited but does not exist")
 
+    def test_every_cited_path_resolves_from_the_citing_file(self):
+        """A citation must be openable, not merely name a file that exists somewhere.
+
+        The check above compares basenames, so a cross-skill citation written as
+        `attack-catalog/references/authz.md` passed while resolving to nothing from the
+        file that carried it. An agent following that link reads no file and silently
+        loses the guidance.
+        """
+        for rel in COMMANDS + AGENTS + SKILLS + REFERENCES:
+            base = os.path.dirname(os.path.join(ROOT, rel))
+            for cited in re.findall(r"`([A-Za-z0-9_\-./]+\.md)`", read(rel)):
+                if cited.startswith("graders/") or cited in ("prompt.md", "SKILL.md"):
+                    continue    # generic references in prose, not links
+                with self.subTest(source=rel, cited=cited):
+                    self.assertTrue(
+                        os.path.exists(os.path.join(base, cited))
+                        or os.path.exists(os.path.join(ROOT, cited)),
+                        f"{rel} cites {cited}, which resolves neither next to it nor "
+                        f"from the plugin root")
+
+    def test_agents_told_to_load_a_skill_can_load_one(self):
+        """Every agent's prompt opens by telling it to load skills. It needs the tool.
+
+        This is the defect shape that has bitten this plugin twice: guidance that exists,
+        is correct, and sits where the agent doing the work cannot reach it. An agent
+        whose `tools:` omits `Skill` is being told to load `failure-triage` with no way
+        to do it.
+        """
+        for path in AGENTS:
+            text = read(path)
+            if not re.search(r"[Ll]oad (the )?`", text):
+                continue
+            fields = frontmatter(text) or {}
+            tools = [t.strip() for t in fields.get("tools", "").split(",")]
+            with self.subTest(agent=path):
+                self.assertIn("Skill", tools,
+                              f"{path} is told to load a skill but does not declare the "
+                              f"Skill tool")
+
     def test_every_agent_is_used_by_a_command(self):
         corpus = "\n".join(read(p) for p in COMMANDS)
         for path in AGENTS:
