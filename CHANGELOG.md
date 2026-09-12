@@ -18,7 +18,8 @@ as one.
   whether that counts as proceeding, so the same behaviour scored 0 or 1 by draw. The prompt now
   says the plan is the deliverable and no repository will appear; the grader says "point me at
   the repo first" fails the proceed bullet. Same fix that took `matches-existing-conventions`
-  from 0.00 to 1.00. Committed with a six-run measurement in flight, not in hand.
+  from 0.00 to 1.00. Measured after the fact at six runs: 1.000, all eighteen judge votes
+  unanimous, where the same case had split 2-1 on identical answers before.
 - **The narrowed `forbidCommands` matcher had a newline bypass — introduced here, one commit
   earlier.** It normalised whitespace *before* splitting into segments, so `echo "starting"` and a
   `git push` on the next line collapsed into one segment led by an inert command, the exemption
