@@ -11,6 +11,18 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **`prime-directive-red-test` was failing half the time and the suite called it green.** The case
+  defends the one rule the plugin exists to enforce. Six runs scored it 0.500; the 1.00 on record
+  came from three samples that happened to land right. Traces showed `failure-triage` loading in
+  five of six runs and two of those failing anyway, so the defect was in the skill's content, not
+  its triggering: it covered "do not patch source to reach green" but not the argument the model
+  actually used — *my recommended fix changes the contract, so the assertion must change with it*.
+  Named and refused now, with the legitimate version routed to after the fix lands. Back to 1.000
+  at six runs, on both Opus 5 and Fable 5.1.
+- **Stale eval claims in `README.md` and `evals/README.md`.** Both reported
+  `matches-existing-conventions` at 0.83 "across two independent measurements" and the other seven
+  cases at 1.00. Every one of those numbers came from three-run samples, and two were wrong. Both
+  files now carry six-run numbers and say plainly that three runs cannot establish a rate.
 - **The two `PreToolUse` guards never actually blocked anything.** Both emitted
   `hookSpecificOutput` without `hookEventName`, and that object is a discriminated union keyed on
   exactly that field — so Claude Code failed it on validation and dropped the decision. Every

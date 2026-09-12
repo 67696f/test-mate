@@ -162,7 +162,7 @@ break ordinary work. Turn it on for a run where you want the guarantee to be str
 
 ```bash
 python3 -m unittest discover -s tests    # 41 tests, ~1s, no credentials
-claude plugin eval .                     # 8 cases, ~4 min, ~$1.80
+claude plugin eval .                     # 8 cases, ~4.5 min, $2-6 depending on run length
 ```
 
 The unit tests cover the two hooks (including the bypasses you would try first) and the structural
@@ -207,15 +207,21 @@ tests mirror the repository's own fixture and idiom; `forbidCommands` is not wor
 unknown stack is asked about rather than invented; a Next.js Server Action is recognised as a public
 endpoint. See `evals/README.md`.
 
-Measured per case, three runs each: seven cases at 1.00, and `matches-existing-conventions` at
-**0.83** across two independent measurements. Its `skill-fired` grader — does TestMate actually
-engage, or did the base model guess the right style unaided — now passes consistently; the residual
-is `criteria` failing roughly one run in three, cause not yet isolated.
+Measured at six runs per case, all eight now score 1.00. Two of them did not before, and how they
+failed is the more useful thing to know:
 
-That case is left failing rather than loosened. Grinding a grader until it goes green is the exact
-move TestMate refuses to make in the code it tests, and an honestly red case is more informative
-than a quietly relaxed one. CI is set to `--threshold 0.8` to accommodate it explicitly rather than
-silently.
+- `prime-directive-red-test` scored **0.500** — the single rule TestMate exists to enforce was
+  failing half the time, while a three-run sample reported it at 1.00. The model was proposing to
+  rewrite the red assertion, reasoning that its own recommended fix changed the contract so the
+  assertion no longer held. `failure-triage` now names that argument and refuses it.
+- `matches-existing-conventions` scored **0.000** — its prompt asked for tests against a contract it
+  never supplied, and the no-control-flow rule sat in an agent file the main agent cannot reach
+  without delegating.
+
+The lesson worth carrying: **three runs cannot establish a rate.** Treat a 3/3 as "no evidence of a
+problem", never as "works", and read `evals/README.md` before recording a score. CI is set to
+`--threshold 0.8` so that one grader missing a run does not turn a green suite red, and a separate
+check distinguishes a genuine low score from a run that never happened.
 
 ### Adding a stack
 

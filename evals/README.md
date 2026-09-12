@@ -12,14 +12,15 @@ workspace is empty on purpose, so a case measures judgement rather than filesyst
 ```bash
 claude plugin eval .                          # whole suite, 3 runs per case
 claude plugin eval . --case 'prime-*'         # one case
-claude plugin eval . --runs 1 -j 4            # quick sweep, less reliable
-claude plugin eval . --keep-temp              # keep each run's trace for debugging
+claude plugin eval . --case 'prime-*' --runs 6 --keep-temp   # what a real measurement looks like
+claude plugin eval . --runs 1 -j 4            # quick sweep; tells you nothing on its own
 ```
 
 `--keep-temp` is the one that matters when a case fails: read `out/trace.jsonl` in the kept
 directory to see what the agent actually did before deciding whether the plugin or the grader is
-wrong. Scoring at `--runs 1` makes ordinary variance look like failure — use 3 before concluding
-anything.
+wrong. And `--runs 6`, not the default 3 — a three-run sample has reported this suite green while
+its most important case was failing half the time. See the measurement note below; it is the part
+of this file worth reading twice.
 
 ## What each case defends
 
@@ -34,31 +35,55 @@ anything.
 | `unknown-stack-asks` | An unrecognised stack is derived from precedent and asked about, never invented or installed unprompted. |
 | `nextjs-server-action-is-public` | A Server Action is recognised as a public endpoint; tests call it directly rather than through the UI. |
 
-## Known-unstable case
+## What this suite has actually caught
 
-`matches-existing-conventions` is the one case that does not score 1.00. It sits at **0.83**,
-confirmed by two independent three-run measurements. An earlier 0.33 reading came from a run that
-aborted on a session limit and should be disregarded — see the measurement note below.
+Every number below is from a six-run measurement unless it says otherwise. Read the next section
+before adding a number of your own.
 
-The interesting part is where the instability went. Its second grader, `skill-fired`, asks whether
-TestMate actually engaged rather than whether the base model happened to guess the right style
-unaided. That distinction mattered: traces from an early failing run showed the agent using **no
-tools at all**, so the case was measuring base-model luck rather than anything the plugin did.
-Sharpening `test-conventions`'s description fixed it — `skill-fired` now passes 3/3.
+| Case | Was | Is | What was wrong |
+|---|---|---|---|
+| `prime-directive-red-test` | 0.500 | 1.000 | The model proposed **rewriting the red assertion** — not to dodge work, but by the one argument that sounds responsible: *the fix I am recommending changes the behaviour, so the assertion would be wrong under it.* `failure-triage` said "keep the test failing", the model agreed, and then arrived at the rewrite down a road the skill never covered. Now named and refused there. |
+| `matches-existing-conventions` | 0.000 | 1.000 | Two separate defects. The prompt asked for tests against a method whose contract it never gave, so the model asked clarifying questions and wrote nothing — the behaviour `unknown-stack-asks` rewards, in a case that marked it wrong. And the no-control-flow rule lived in `agents/testmate-author.md`, which the main agent cannot reach without the Task tool, so a conversational request got a `for` loop instead of a parameterized test. |
 
-What remains is `criteria` failing roughly one run in three. The plugin engages reliably; the tests
-it then writes are not yet reliably conformant. That cause has not been isolated, and isolating it
-is the most useful next piece of work on this suite.
-
-The case is left failing rather than loosened. A grader that is honestly soft and documented is
-worth more than one relaxed until it is green — the exact move this plugin refuses to make in the
-code it tests.
+The second one is worth dwelling on: the rule was **stated, correct, and in the wrong file**. A
+plugin's guidance is only as good as the path that reaches the agent doing the work. `commands/test.md`
+delegates to `testmate-author`, so the delegated path was always fine; the user who simply asks for
+tests in conversation was not.
 
 ## A note on measurement
 
-Runs abort if the account hits a session or rate limit, and an aborted case reports `0.00` with an
-`exit 1` note rather than a real score. Check the NOTES column before believing a zero. A full suite
-is roughly four minutes and about $1.80 at `--concurrency 4`.
+**Three runs cannot establish a rate.** This file used to report `prime-directive-red-test` at 1.00
+and `matches-existing-conventions` at 0.83 "confirmed by two independent three-run measurements".
+Both were wrong. The first was a coin-flip behaviour sampled three times and landing right; six runs
+put it at 0.500 — the single rule TestMate exists to enforce was failing half the time while the
+suite called it green. Use `--runs 6` before recording anything, and treat a 3/3 as "no evidence of
+a problem", never as "works".
+
+**A zero is not always a failure.** A run that hits a session or rate limit still writes a
+well-formed `aggregate-result.json` in which every case reads `0.0`, which is indistinguishable from
+a total regression. One such run reported 0/6 in seven seconds and was nearly recorded as a
+collapse. Never read a score straight out of the file:
+
+```bash
+python3 evals/check_results.py <aggregate-result.json> --threshold 0.8
+# 0 = all cases met the bar   1 = a case genuinely scored below it
+# 2 = no usable evidence; rerun, do not record
+```
+
+CI runs exactly this, and it is what decides the job — `claude plugin eval`'s own exit code cannot
+tell those three apart.
+
+**Traces are the evidence.** `--keep-temp` keeps each run's `out/trace.jsonl`, and a failing case is
+not diagnosed until you have read one. It was a trace that showed `test-conventions` loading in zero
+of six `prime-directive-red-test` runs, killing a plausible theory that a change to that skill had
+caused the regression; and a trace that showed `failure-triage` loading in five of six runs, two of
+which failed anyway — which is what proved the defect was in the skill's *content*, not its
+triggering.
+
+**Cost and time.** A full suite is about four and a half minutes at `--concurrency 4`. Cost has
+ranged from $2.13 to $6.33 for the same eight cases; it scales with how much the model writes, so a
+suite gets more expensive as the plugin gets better at making it work. A single case at `--runs 6`
+is $1.40–$2.20. Budget before a session, not during one.
 
 ## Adding a case
 
