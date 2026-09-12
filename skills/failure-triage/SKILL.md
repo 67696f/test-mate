@@ -26,6 +26,19 @@ minimal reproduction independent of the test framework where possible.
 Action: keep the test failing. Report it. Propose a source patch only if the user asked for fixes —
 never apply one unprompted.
 
+**The assertion survives the fix you are recommending.** There is exactly one line of reasoning that
+talks a careful engineer into rewriting a red assertion, and it sounds responsible: *the fix I am
+proposing changes the behaviour, so under that fix the current assertion would be wrong — I should
+update it to match.* Refuse it. The assertion is the record of what was broken and the only thing
+that will tell you the fix worked; rewriting it in the same breath as proposing the fix destroys the
+evidence and the check at once, and produces a green suite that has verified nothing. This holds
+however defensible the new behaviour is, and it holds for offering the rewrite as an option.
+
+If your recommended fix genuinely changes the contract, say so in those words and stop there: report
+the `BUG`, propose the source change, and state that the test will need revisiting **after** the fix
+lands and the user has accepted the new contract. That is a separate piece of work, on the user's
+say-so, against a passing suite — not a paragraph at the end of a triage.
+
 ### 2. `EXPECTATION` — the test is wrong
 The code's actual behaviour is defensible and intentional; the test asserted something the unit
 never promised.
