@@ -1,0 +1,12 @@
+{
+  "level": "high",
+  "roots": [
+    { "path": "backend", "level": "max" },
+    { "path": "frontend", "level": "standard" }
+  ],
+  "exclude": ["**/generated/**", "**/node_modules/**", "vendor/**"],
+  "forbidCommands": ["mvn deploy", "npm publish"],
+  "reportDir": ".testmate/reports",
+  "mutation": { "enabled": true, "threshold": 70 },
+  "allowDependencyChanges": false
+}

@@ -1,0 +1,13 @@
+{
+  "name": "binwi-tools",
+  "owner": {
+    "name": "Giorgi Nadiradze"
+  },
+  "plugins": [
+    {
+      "name": "testmate",
+      "source": "./",
+      "description": "Adversarial test generation, execution and triage for any language or framework."
+    }
+  ]
+}

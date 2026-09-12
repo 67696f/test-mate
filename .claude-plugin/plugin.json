@@ -1,0 +1,24 @@
+{
+  "name": "testmate",
+  "description": "TestMate — an adversarial test engineer. Detects your stack, learns your existing test conventions, then writes tests that try to break the code: injection, authz bypass, boundaries, concurrency, locale/encoding variance. Runs them, triages every failure as a real bug or a wrong expectation, and never edits a test just to make it green.",
+  "version": "0.1.0",
+  "author": {
+    "name": "Giorgi Nadiradze"
+  },
+  "homepage": "https://github.com/67696f/test-mate",
+  "repository": "https://github.com/67696f/test-mate",
+  "keywords": [
+    "testing",
+    "security",
+    "unit-tests",
+    "integration-tests",
+    "mutation-testing",
+    "fuzzing",
+    "sql-injection",
+    "debugging",
+    "junit",
+    "pytest",
+    "vitest"
+  ],
+  "license": "MIT"
+}
