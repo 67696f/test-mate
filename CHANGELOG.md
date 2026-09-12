@@ -19,6 +19,9 @@ as one.
 - **The eval workflow had never run, once.** It was `pull_request`-only and this repository's
   history is direct pushes to main, so the suite guarding the prompt surface guarded nothing.
   Pushes to main now trigger it, behind the same path filter so a docs edit does not pay for a run.
+  It also skips with a warning rather than failing when `ANTHROPIC_API_KEY` is not configured —
+  which it is not, on this repository, and a workflow red on every push is how one gets ignored
+  into dormancy in the first place. **Set the secret for the suite to actually run.**
 - **`skill-fired` could turn the suite red for a non-defect.** It fires about five runs in six, and
   at equal weight two misses in CI's three-run default dropped the case to 0.67. It is now
   `weight: 0.05` — a miss reads 0.952, visible in the report and nowhere near the gate. It also
