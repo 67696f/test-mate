@@ -23,16 +23,26 @@ jobs:
       - name: Run the eval suite
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        # --threshold 0.8 tolerates the known-soft skill-fired grader on
-        # matches-existing-conventions; every other case is expected at 1.00.
+        # The exit code is deliberately ignored here. `claude plugin eval` exits 1 both
+        # for a case that scored badly and for a run that never happened -- a session or
+        # rate limit writes a well-formed report in which every case reads 0.0. Only the
+        # next step can tell those apart, so it is the one that decides.
         run: |
           claude plugin eval . \
             --trust-plugin \
             --no-publish \
             --ablation none \
             --concurrency 4 \
-            --threshold 0.8 \
-            --json evals-result.json
+            --json evals-result.json || true
+
+      - name: Judge the result
+        # Exit 1 = a case genuinely scored below the bar. Exit 2 = the run produced no
+        # usable evidence and must be rerun rather than recorded. Both fail the job; only
+        # one of them is a verdict on the plugin.
+        #
+        # --threshold 0.8 tolerates the skill-fired grader on matches-existing-conventions
+        # missing one run in six; every other case is expected at 1.00.
+        run: python3 evals/check_results.py evals-result.json --threshold 0.8
 
       - uses: actions/upload-artifact@v4
         if: always()
