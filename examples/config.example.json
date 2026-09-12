@@ -5,8 +5,9 @@
     { "path": "frontend", "level": "standard" }
   ],
   "exclude": ["**/generated/**", "**/node_modules/**", "vendor/**"],
-  "forbidCommands": ["mvn deploy", "npm publish"],
+  "forbidCommands": ["mvn deploy", "npm publish", "git push"],
   "reportDir": ".testmate/reports",
   "mutation": { "enabled": true, "threshold": 70 },
-  "allowDependencyChanges": false
+  "allowDependencyChanges": false,
+  "enforce": { "sourceWrites": false }
 }

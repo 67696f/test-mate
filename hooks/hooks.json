@@ -1,0 +1,27 @@
+{
+  "description": "TestMate enforcement: blocks commands listed in forbidCommands, and (opt-in) keeps writes inside test paths. Both read .testmate/config.json from the project and do nothing when the project has not configured them.",
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard_commands.py",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 ${CLAUDE_PLUGIN_ROOT}/hooks/guard_writes.py",
+            "timeout": 10
+          }
+        ]
+      }
+    ]
+  }
+}

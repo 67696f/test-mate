@@ -31,6 +31,7 @@ a malformed safety config must never be treated as an absent one.
 | `mutation.enabled` | `boolean` | `true` | Whether `/testmate:mutate` may run at all. |
 | `mutation.threshold` | `number` (0-100) | none | Mutation score below which the run is reported as failing. |
 | `allowDependencyChanges` | `boolean` | `false` | Whether a build/manifest file may be edited to add a test dependency. |
+| `enforce.sourceWrites` | `boolean` | `false` | Hard-block writes outside test paths, via the plugin's PreToolUse hook. |
 
 Unknown keys are reported once as a warning — a typo in a safety key is a silent failure otherwise —
 and then ignored.
@@ -50,6 +51,21 @@ user can see which rule applied.
 
 These are obligations, not suggestions. Each one corresponds to a promise made in the README.
 
+### What the harness enforces, and what you enforce
+
+Two of these settings are backed by a `PreToolUse` hook the plugin ships in `hooks/`, so they hold
+whatever the model decides:
+
+- **`forbidCommands`** is enforced by `hooks/guard_commands.py` for every `Bash` call, active
+  whenever the list is non-empty.
+- **`enforce.sourceWrites`** is enforced by `hooks/guard_writes.py` for every `Write` and `Edit`,
+  and is **off by default** — a plugin hook fires for the user's own edits too, so enforcing it
+  unasked would be worse than the problem it solves.
+
+Everything else in this file is enforced by you following it. Both kinds are obligations; only the
+first kind survives a model that gets it wrong, so do not treat the hook's existence as permission
+to be careless about the rest.
+
 ### `forbidCommands` — check before every execution
 
 Before running **any** shell command, compare it against every entry in `forbidCommands`. An entry
@@ -63,6 +79,9 @@ not look for an equivalent command that evades the pattern — that is circumven
 
 This obligation extends to every agent TestMate spawns. Pass the `forbidCommands` list to each
 agent that has `Bash`, in its prompt, as a list it must check against.
+
+The hook will also block a match independently. If it does, you will receive a denial naming the
+entry that matched — report it and move on; do not retry a reworded form of the same command.
 
 ### `exclude` — filter targets before work begins
 

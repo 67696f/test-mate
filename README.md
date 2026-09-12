@@ -126,7 +126,34 @@ Every test TestMate writes is:
 - **Deterministic** — injected clock, seeded RNG, explicit locale and timezone;
 - **Non-destructive** — destructive scenarios run against a throwaway fixture the test created.
 
-And TestMate never edits your source code unless you explicitly ask it to.
+And TestMate does not edit your source code unless you explicitly ask it to.
+
+### Instructed vs. enforced
+
+Be clear about which is which. Most of the above is **instructed** — it lives in the agent
+definitions and the model follows it. The agents are scoped as tightly as their job allows
+(`testmate-adversary` holds only `Read`, `Grep` and `Glob`, so its read-only posture is structural),
+but the author agent must be able to write test files, and no tool grants write access to one
+subtree only. So "never edits your source" is a rule the model obeys, not a wall it cannot cross.
+
+Two settings are **enforced** by a `PreToolUse` hook the plugin ships, and hold regardless:
+
+| Setting | Enforced by | Active when |
+|---|---|---|
+| `forbidCommands` | `hooks/guard_commands.py` on every `Bash` call | the list is non-empty |
+| `enforce.sourceWrites` | `hooks/guard_writes.py` on every `Write`/`Edit` | you set it to `true` |
+
+```json
+{
+  "forbidCommands": ["mvn deploy", "npm publish", "git push"],
+  "enforce": { "sourceWrites": true }
+}
+```
+
+`enforce.sourceWrites` restricts writes to recognised test paths — `src/test/`, `tests/`,
+`__tests__/`, `*_test.go`, `*.test.ts`, `*Test.java`, `conftest.py` and friends. It is **off by
+default** on purpose: a plugin hook fires for your own edits too, so switching it on unasked would
+break ordinary work. Turn it on for a run where you want the guarantee to be structural.
 
 ## How it works
 
@@ -141,9 +168,23 @@ skills/       test-strategy       levels, taxonomy, hermeticity rules
               attack-catalog      vulnerability families → test shapes  ← the core
               failure-triage      BUG / EXPECTATION / FIXTURE / UNDECIDED
               stack-adapters      per-stack idiom, tooling and commands
+              testmate-config     reads and enforces .testmate/config.json
+hooks/        guard_commands.py   blocks forbidCommands (PreToolUse, Bash)
+              guard_writes.py     keeps writes in test paths (opt-in)
 ```
 
-Adding a language is one markdown file in `skills/stack-adapters/references/` — no code change.
+### Adding a stack
+
+Two edits, no code:
+
+1. Write `skills/stack-adapters/references/<stack>.md` covering the six sections the parent skill
+   lists — where test files go, the refusal idiom, the fixture idiom, parameterization, doubles,
+   and the commands to run.
+2. Add a detection row to the table in `skills/stack-adapters/SKILL.md` mapping a build manifest to
+   that file.
+
+The attack catalogue needs no changes — test shapes are language-independent, and an adapter only
+translates them into idiom.
 
 ## Licence
 
