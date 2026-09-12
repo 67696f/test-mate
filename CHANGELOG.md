@@ -11,6 +11,29 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **`enforce.sourceWrites` allowed writes to test paths outside the project.** The guard matched on
+  path shape, and `os.path.relpath` turns any outside path into `../…`, so `/anywhere/tests/x.py`
+  read as test surface and was approved. A guard switched on for one repository was permission to
+  write test-shaped paths across the filesystem. Paths resolving outside the root holding
+  `.testmate/config.json` are now refused whatever they are named.
+- **The eval workflow had never run, once.** It was `pull_request`-only and this repository's
+  history is direct pushes to main, so the suite guarding the prompt surface guarded nothing.
+  Pushes to main now trigger it, behind the same path filter so a docs edit does not pay for a run.
+- **`skill-fired` could turn the suite red for a non-defect.** It fires about five runs in six, and
+  at equal weight two misses in CI's three-run default dropped the case to 0.67. It is now
+  `weight: 0.05` — a miss reads 0.952, visible in the report and nowhere near the gate. It also
+  carries `arm: with-only`, which is the proper mechanism but inert under `--ablation none`: the
+  runner sets `with_only` only for runs belonging to a named arm, and CI passes `--ablation none`
+  to avoid paying for a second no-plugin arm.
+- CI actions bumped past the Node 20 deprecation (`checkout@v7`, `setup-python@v7`,
+  `upload-artifact@v7`).
+
+### Documented
+- **`forbidCommands` over-matches on purpose.** An entry of `git push` also blocks
+  `echo "git push"`. Narrowing it means parsing a shell well enough to know which occurrence is
+  real, which is the analysis an `&&` chain or a deliberate evasion is built to defeat. A false
+  block costs a sentence; a false allow deploys to production. Stated now in the config skill and
+  the README rather than discovered.
 - **`prime-directive-red-test` was failing half the time and the suite called it green.** The case
   defends the one rule the plugin exists to enforce. Six runs scored it 0.500; the 1.00 on record
   came from three samples that happened to land right. Traces showed `failure-triage` loading in

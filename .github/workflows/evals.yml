@@ -1,21 +1,31 @@
 name: evals
 
+# This workflow had never run once. It was pull_request-only, and this repository's
+# history is direct pushes to main, so the suite that guards the prompt surface was
+# guarding nothing. Pushes to main now trigger it too.
+#
+# It is not free: a full suite is about four and a half minutes and has cost between
+# $2.13 and $6.33, against the same account limit a developer is using. The path filter
+# is what keeps that bounded -- a README or CI edit does not pay for an eval run.
 on:
   pull_request:
-    paths:
+    paths: &eval_paths
       - 'commands/**'
       - 'agents/**'
       - 'skills/**'
       - 'hooks/**'
       - 'evals/**'
       - '.claude-plugin/**'
+  push:
+    branches: [main]
+    paths: *eval_paths
   workflow_dispatch:
 
 jobs:
   eval:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install Claude Code
         run: npm install -g @anthropic-ai/claude-code
@@ -44,7 +54,7 @@ jobs:
         # missing one run in six; every other case is expected at 1.00.
         run: python3 evals/check_results.py evals-result.json --threshold 0.8
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         if: always()
         with:
           name: eval-results

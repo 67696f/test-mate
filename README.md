@@ -107,7 +107,9 @@ obligations rather than hints:
 
 - **`forbidCommands`** is checked before every shell command, in the commands and in every agent
   that can run one. A match is not run, is reported, and is not worked around with an equivalent
-  command that evades the pattern.
+  command that evades the pattern. Matching is substring-based and over-matches on purpose — `git
+  push` also blocks `echo "git push"` — because a false block costs a sentence and a false allow
+  deploys to production. Keep entries specific: `npm publish`, not `npm`.
 - **`exclude`** filters targets during selection, ranking and writing. An excluded path named
   explicitly gets a question, not silent obedience either way.
 - **`reportDir`** is the only place reports go; no path is hardcoded.
@@ -154,7 +156,10 @@ Two settings are **enforced** by a `PreToolUse` hook the plugin ships, and hold 
 ```
 
 `enforce.sourceWrites` restricts writes to recognised test paths — `src/test/`, `tests/`,
-`__tests__/`, `*_test.go`, `*.test.ts`, `*Test.java`, `conftest.py` and friends. It is **off by
+`__tests__/`, `*_test.go`, `*.test.ts`, `*Test.java`, `conftest.py` and friends — **within the
+project**. A path that resolves outside the root holding `.testmate/config.json` is refused whatever
+it is named, so the guard cannot be turned into permission to write test-shaped paths elsewhere on
+the filesystem. It is **off by
 default** on purpose: a plugin hook fires for your own edits too, so switching it on unasked would
 break ordinary work. Turn it on for a run where you want the guarantee to be structural.
 

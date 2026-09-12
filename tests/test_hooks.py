@@ -214,6 +214,26 @@ class TestSourceWrites(GuardTestCase):
         os.symlink(target, link)
         self.assertEqual(self.decide(file_path=link)[0], DENY)
 
+    def test_test_path_outside_the_project_denied(self):
+        """The guard is scoped to this repository, not to test-shaped paths everywhere.
+
+        The patterns match on shape alone, so without a containment check a write to
+        /anywhere/tests/x.py reads as test surface -- and a guard the user switched on for
+        one project becomes permission to write across the filesystem.
+        """
+        self.write_config({"enforce": {"sourceWrites": True}})
+        outside = tempfile.TemporaryDirectory()
+        self.addCleanup(outside.cleanup)
+        victim = os.path.join(outside.name, "tests", "evil.py")
+        os.makedirs(os.path.dirname(victim))
+        self.assertEqual(self.decide(file_path=victim)[0], DENY)
+
+    def test_sibling_directory_named_tests_denied(self):
+        """`../tests/x.py` resolves outside the root and is not this project's surface."""
+        self.write_config({"enforce": {"sourceWrites": True}})
+        self.assertEqual(
+            self.decide(file_path=f"{self.root}/../tests/evil.py")[0], DENY)
+
     # --- test paths across every shipped adapter --------------------------------------------
 
     def test_recognised_test_paths_approved(self):

@@ -69,8 +69,16 @@ def is_test_path(path, root):
     try:
         relative = os.path.relpath(os.path.realpath(path), root)
     except ValueError:
-        relative = path
+        # Different drive on Windows: not under the root, so not this project's surface.
+        return False
     relative = relative.replace(os.sep, "/")
+    # Outside the project entirely. The patterns below describe THIS project's test
+    # surface, and they match on shape alone -- so without this check a write to
+    # /anywhere/tests/x.py reads as test surface and is allowed, which turns a guard
+    # scoped to one repository into permission to write test-shaped paths across the
+    # whole filesystem.
+    if relative == ".." or relative.startswith("../"):
+        return False
     if TEST_DIR_PATTERN.search(relative):
         return True
     return bool(TEST_FILE_PATTERN.search(os.path.basename(relative)))

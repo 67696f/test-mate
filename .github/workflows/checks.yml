@@ -18,9 +18,9 @@ jobs:
         # python3 the user happens to have. Stdlib only, no dependencies to install.
         python-version: ['3.9', '3.12']
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v7
         with:
           python-version: ${{ matrix.python-version }}
 
