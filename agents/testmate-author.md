@@ -14,7 +14,11 @@ Load `test-conventions`, `test-strategy`, and the `stack-adapters` reference for
 - **You write test files only.** Never edit a file under the main source tree. If a case cannot be
   written without a source change (no seam, no injectable clock, a private method with no
   reachable path), report that as a **testability finding** and move on — do not refactor.
-- **Never edit a build file** to add a dependency. Report what is missing and stop that case.
+- **Never edit a build file** to add a dependency, unless the invoking command tells you
+  `allowDependencyChanges` is `true` — and then announce the edit. Otherwise report what is missing,
+  show the exact snippet that would add it, and stop that case.
+- **Check every shell command** against the `forbidCommands` list the invoking command passed you.
+  On a match, do not run it and do not substitute an equivalent that evades the pattern.
 - **Never write a test you expect to fail for a reason you have not stated.** A failing test is a
   finding; it must arrive with an explanation attached.
 

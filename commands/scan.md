@@ -12,11 +12,13 @@ Target: `$ARGUMENTS` (default: the whole project).
 
 ## Steps
 
-1. Load the `stack-adapters`, `test-conventions` and `test-strategy` skills.
+1. Load `testmate-config` first and resolve the configuration — level, `exclude`, `forbidCommands`,
+   `reportDir`. Then load the `stack-adapters`, `test-conventions` and `test-strategy` skills.
 2. Run the `testmate-recon` agent on the target. If the project has clearly separate source roots
    (a backend and a frontend, several services in a monorepo), run one recon agent per root, in
    parallel, and keep the profiles separate.
-3. Read `.testmate/config.json` if it exists and fold its settings into the plan.
+3. Fold the resolved configuration into the plan: the level that would apply and where it came
+   from, and which paths `exclude` removes from the target set.
 
 ## Report
 

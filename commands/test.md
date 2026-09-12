@@ -22,8 +22,12 @@ red with every failure correctly explained, the run succeeded.
 
 ## Steps
 
-1. **Load** `test-strategy`, `test-conventions`, `stack-adapters`, `attack-catalog`,
-   `failure-triage`. Read `.testmate/config.json` if present.
+1. **Load** `testmate-config` first and resolve the configuration — the level (an explicit
+   `--level` wins over `roots[].level`, which wins over `level`, which defaults to `high`),
+   `exclude`, `forbidCommands`, `reportDir`, `allowDependencyChanges`. Then load `test-strategy`,
+   `test-conventions`, `stack-adapters`, `attack-catalog`, `failure-triage`.
+
+   Pass `forbidCommands` to every agent you spawn that holds `Bash`.
 
 2. **Recon** — run `testmate-recon` on the target unless a profile from a `/testmate:scan` earlier
    in this conversation is still accurate. Note any pre-existing test failures now, so they are
@@ -49,8 +53,8 @@ red with every failure correctly explained, the run succeeded.
 
 ## Report
 
-Write the findings report to `.testmate/reports/<ISO-date>-<target>.md` in the format from
-`failure-triage`, and summarise in chat:
+Write the findings report to `<reportDir>/<ISO-date>-<target>.md` — `reportDir` resolved from
+config, default `.testmate/reports` — in the format from `failure-triage`, and summarise in chat:
 
 - Files created or extended, and the case count in each.
 - Counts: generated / passing / failing, and the verdict breakdown.

@@ -20,28 +20,30 @@ wrong behaviour. `--fix` permits proposing and applying a source patch after the
 
 ## Steps
 
-1. **Reproduce.** Run the exact failing case in isolation and read the real output — report files,
+1. **Load** `testmate-config` and resolve `forbidCommands` and `reportDir` before running anything.
+
+2. **Reproduce.** Run the exact failing case in isolation and read the real output — report files,
    full trace, sanitizer output. If it passes in isolation but fails in the suite, the cause is
    shared state; that is the bug, and it is a finding in its own right.
 
    If the failure is intermittent, run with repetition (`-count=10`, `--repeat until-fail:10`,
    `-race`, a loop) and report the failure rate. That number is diagnostic.
 
-2. **Minimize.** Strip the reproduction until removing one more element makes it pass. What remains
+3. **Minimize.** Strip the reproduction until removing one more element makes it pass. What remains
    is the defect's shape, and it is usually recognisable at that point.
 
-3. **Hypothesize, then test.** State the hypothesis. Add temporary instrumentation — a captured
+4. **Hypothesize, then test.** State the hypothesis. Add temporary instrumentation — a captured
    argument, a log line, a counter, a breakpoint-equivalent assertion — run it, read the result,
    then remove the instrumentation. Repeat. Do not shotgun changes.
 
-4. **Bisect** if git history is available and the code used to work: find the commit that
+5. **Bisect** if git history is available and the code used to work: find the commit that
    introduced it and read its diff.
 
-5. **Widen.** Once you have the cause, look for its siblings — the same mistake on another path, in
+6. **Widen.** Once you have the cause, look for its siblings — the same mistake on another path, in
    another method, in another module. The second instance of a bug is nearly always cheaper to find
    now than later. Report each one.
 
-6. **Write the regression test** before any fix: a test that fails for exactly this reason and
+7. **Write the regression test** before any fix: a test that fails for exactly this reason and
    would have caught it. Follow `test-conventions` so it belongs in the suite.
 
 ## Report

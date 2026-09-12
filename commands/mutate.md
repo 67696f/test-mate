@@ -13,10 +13,14 @@ Arguments: `$ARGUMENTS` — a path or package to mutate, `--write` to add tests 
 
 ## Steps
 
-1. **Check the suite is green first.** Mutation results are meaningless over a failing suite. If it
+1. **Load** `testmate-config` and resolve the configuration. If `mutation.enabled` is `false`, say
+   that mutation testing is disabled by config and stop. Note `mutation.threshold` — it is the
+   default for `--threshold` — and honour `exclude`, `forbidCommands` and `reportDir`.
+
+2. **Check the suite is green first.** Mutation results are meaningless over a failing suite. If it
    is red, stop and say so — run `/testmate:test` or `/testmate:debug` first.
 
-2. **Find the tool** from `stack-adapters`:
+3. **Find the tool** from `stack-adapters`:
 
    | Stack | Tool | Invocation |
    |---|---|---|
@@ -30,12 +34,12 @@ Arguments: `$ARGUMENTS` — a path or package to mutate, `--write` to add tests 
    If it is not configured, **do not add it to the build file yourself** — show the exact
    configuration snippet and ask. These tools are slow and invasive; the user should opt in.
 
-3. **Scope it.** Mutation testing is expensive — often 10-100× a normal suite run. Mutate one
+4. **Scope it.** Mutation testing is expensive — often 10-100× a normal suite run. Mutate one
    package or one file at a time, starting with the highest-risk target from recon. Say how long
    you expect it to take before starting, and never launch an unbounded whole-repo run without
    warning the user.
 
-4. **Read the survivors.** A surviving mutant is a change to the source that no test noticed.
+5. **Read the survivors.** A surviving mutant is a change to the source that no test noticed.
    Classify each:
 
    - **Real gap** — the mutation changes behaviour a caller would care about and nothing caught it.
@@ -45,7 +49,7 @@ Arguments: `$ARGUMENTS` — a path or package to mutate, `--write` to add tests 
    - **Dead code** — the mutated code cannot be reached at all. That is a finding of its own:
      report it as removable.
 
-5. **With `--write`** — run `testmate-author` to add a test per real gap, then re-run mutation on
+6. **With `--write`** — run `testmate-author` to add a test per real gap, then re-run mutation on
    that target and report the new score. Each new test must be a genuine behavioural assertion; a
    test written only to kill a mutant, with no meaning to a reader, is worse than the gap.
 

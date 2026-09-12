@@ -65,7 +65,8 @@ suite pinned to current behaviour with a comment marking it as characterization,
 
 ## Findings report format
 
-Write to `.testmate/reports/<ISO-date>-<target>.md` and summarise in chat.
+Write to `<reportDir>/<ISO-date>-<target>.md` — `reportDir` resolved by `testmate-config`,
+default `.testmate/reports` — and summarise in chat.
 
 ```markdown
 # TestMate run — <target> — level <level>

@@ -8,13 +8,19 @@ argument-hint: "[report path | path | file]"
 Take findings and make them executable. Every finding becomes a test that asserts the code
 *refuses* the bad input. The tests that fail are the findings that were real.
 
-Argument: `$ARGUMENTS` — a report path under `.testmate/reports/`, or a code path to audit first.
+Argument: `$ARGUMENTS` — a report path under the configured `reportDir` (default
+`.testmate/reports/`), or a code path to find findings in first.
 
 ## Steps
 
-1. If given a report, read it. If given a code path with no report, run `/testmate:audit` on it
-   first and use those findings. If the user ran an audit earlier in this conversation, reuse it.
-2. Load `attack-catalog`, `test-conventions`, `stack-adapters`, `failure-triage`.
+1. Load `testmate-config` first and resolve the configuration — level, `exclude`, `forbidCommands`,
+   `reportDir`, `allowDependencyChanges`. Pass `forbidCommands` to every agent you spawn that holds
+   `Bash`. Then load `attack-catalog`, `test-conventions`, `stack-adapters`, `failure-triage`.
+2. Obtain the findings. If given a report path, read it. If the user ran an audit earlier in this
+   conversation, reuse those findings. If given a code path with no findings available, produce them
+   here by following the procedure in `commands/audit.md` — run `testmate-recon` for the profile,
+   then `testmate-adversary` across the ranked targets, then verify each `likely-bug` case yourself
+   before treating it as a finding.
 3. Run `testmate-recon` for the convention and stack profile if you do not already have it.
 4. Run `testmate-author` with a case list built **one case per finding**, plus the positive
    counterpart for each — legitimate input on the same path must still succeed.

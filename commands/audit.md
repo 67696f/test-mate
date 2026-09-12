@@ -15,7 +15,9 @@ other than read-only static analysis the project already has configured.
 
 ## Steps
 
-1. Load `attack-catalog` and its references, plus `stack-adapters` for language-specific hazards.
+1. Load `testmate-config` first and resolve the configuration — level, `exclude`, `forbidCommands`,
+   `reportDir`. Then load `attack-catalog` and its references, plus `stack-adapters` for
+   language-specific hazards. Pass `forbidCommands` to every agent you spawn that holds `Bash`.
 2. Run `testmate-recon` for the stack profile and the risk ranking.
 3. Run `testmate-adversary` across the ranked targets — in parallel across modules. Ask for the
    full case list including `confidence` ratings.
@@ -28,7 +30,8 @@ other than read-only static analysis the project already has configured.
 
 ## Report
 
-Write to `.testmate/reports/<ISO-date>-audit.md` and summarise in chat.
+Write to `<reportDir>/<ISO-date>-audit.md` — `reportDir` resolved from config, default
+`.testmate/reports` — and summarise in chat.
 
 Order by severity (`attack-catalog` defines the three levels), security ahead of correctness at
 equal severity. For each finding:

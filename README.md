@@ -99,8 +99,22 @@ Optional, at `.testmate/config.json` in your project:
 }
 ```
 
-`allowDependencyChanges` is `false` by default — TestMate will tell you what a test needs and ask
-before touching a build file.
+Every command loads the `testmate-config` skill before doing anything else, and the settings are
+obligations rather than hints:
+
+- **`forbidCommands`** is checked before every shell command, in the commands and in every agent
+  that can run one. A match is not run, is reported, and is not worked around with an equivalent
+  command that evades the pattern.
+- **`exclude`** filters targets during selection, ranking and writing. An excluded path named
+  explicitly gets a question, not silent obedience either way.
+- **`reportDir`** is the only place reports go; no path is hardcoded.
+- **`allowDependencyChanges`** is `false` by default — TestMate names the dependency a test would
+  need, shows the snippet, and asks before touching a build file.
+- **`mutation.enabled: false`** stops `/testmate:mutate` outright.
+
+A config file that exists but does not parse stops the run. It is never treated as absent — a
+malformed safety config must not silently become no safety config. Runs that used a config say
+which settings actually changed behaviour.
 
 ## Guarantees
 
