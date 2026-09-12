@@ -1,0 +1,56 @@
+name: checks
+
+# Fast, credential-free, and runs on everything. The eval suite (evals.yml) needs a
+# Claude credential and four minutes; this needs neither, so it is the gate that
+# always runs.
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The hooks run wherever Claude Code does, so they must work on whatever
+        # python3 the user happens to have. Stdlib only, no dependencies to install.
+        python-version: ['3.9', '3.12']
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Hook and integrity tests
+        run: python3 -m unittest discover -s tests -v
+
+      - name: Hooks compile and are stdlib-only
+        run: |
+          python3 -m compileall -q hooks/
+          # Any third-party import would break on a user's machine.
+          if grep -rnE '^\s*(import|from)\s+(?!json|os|re|sys|fnmatch|tempfile|subprocess|unittest)' \
+              --include='*.py' -P hooks/; then
+            echo "::error::hooks must import stdlib only"
+            exit 1
+          fi
+
+      - name: Manifests parse
+        run: |
+          for f in .claude-plugin/plugin.json .claude-plugin/marketplace.json \
+                   hooks/hooks.json examples/config.example.json; do
+            python3 -c "import json,sys; json.load(open('$f'))" || exit 1
+            echo "ok $f"
+          done
+
+      - name: Version matches the changelog
+        if: matrix.python-version == '3.12'
+        run: |
+          version=$(python3 -c "import json; print(json.load(open('.claude-plugin/plugin.json'))['version'])")
+          if ! grep -q "^## \[$version\]" CHANGELOG.md; then
+            echo "::error::plugin.json is $version but CHANGELOG.md has no '## [$version]' section"
+            exit 1
+          fi
+          echo "ok: $version is in the changelog"

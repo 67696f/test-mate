@@ -62,8 +62,15 @@ def main():
         emit("ask", f"TestMate: {config_path} could not be parsed ({exc}). "
                     "forbidCommands cannot be enforced until it is valid JSON.")
 
-    forbidden = config.get("forbidCommands") or []
-    if not isinstance(forbidden, list) or not forbidden:
+    forbidden = config.get("forbidCommands")
+    if forbidden is None:
+        approve_silently()
+    if not isinstance(forbidden, list):
+        # A typo in a safety key must not silently become an absent safety key.
+        emit("ask", f"TestMate: forbidCommands in {config_path} is "
+                    f"{type(forbidden).__name__}, expected a list of strings. It cannot be "
+                    f"enforced until that is fixed.")
+    if not forbidden:
         approve_silently()
 
     # Normalise whitespace so that a reformatted command cannot slip past a pattern.

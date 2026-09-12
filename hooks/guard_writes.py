@@ -48,7 +48,7 @@ def find_config(start):
     while True:
         candidate = os.path.join(path, ".testmate", "config.json")
         if os.path.isfile(candidate):
-            return candidate, path
+            return candidate, os.path.realpath(path)
         parent = os.path.dirname(path)
         if parent == path:
             return None, None
@@ -56,8 +56,10 @@ def find_config(start):
 
 
 def is_test_path(path, root):
+    # realpath, not abspath: abspath normalises ".." but follows no symlinks, so a link
+    # under tests/ pointing into src/ would otherwise pass as test surface.
     try:
-        relative = os.path.relpath(os.path.abspath(path), root)
+        relative = os.path.relpath(os.path.realpath(path), root)
     except ValueError:
         relative = path
     relative = relative.replace(os.sep, "/")

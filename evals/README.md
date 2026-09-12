@@ -36,16 +36,19 @@ anything.
 
 ## Known-unstable case
 
-`matches-existing-conventions` is the one case that does not score 1.00, and its results disagree
-between runs — 0.83 in one clean measurement (`criteria` 3/3, `skill-fired` 2/3), 0.33 in another.
-Treat it as unsettled until a clean full-suite run confirms it.
+`matches-existing-conventions` is the one case that does not score 1.00. It sits at **0.83**,
+confirmed by two independent three-run measurements. An earlier 0.33 reading came from a run that
+aborted on a session limit and should be disregarded — see the measurement note below.
 
-Its second grader, `skill-fired`, asks whether TestMate actually engaged rather than whether the
-base model happened to guess the right style unaided. That distinction matters: traces from an
-earlier failing run showed the agent using **no tools at all**, which meant the case was measuring
-base-model luck rather than anything the plugin did. Sharpening `test-conventions`'s description
-fixed the engagement problem in isolation; whether it holds under load is what the outstanding run
-will show.
+The interesting part is where the instability went. Its second grader, `skill-fired`, asks whether
+TestMate actually engaged rather than whether the base model happened to guess the right style
+unaided. That distinction mattered: traces from an early failing run showed the agent using **no
+tools at all**, so the case was measuring base-model luck rather than anything the plugin did.
+Sharpening `test-conventions`'s description fixed it — `skill-fired` now passes 3/3.
+
+What remains is `criteria` failing roughly one run in three. The plugin engages reliably; the tests
+it then writes are not yet reliably conformant. That cause has not been isolated, and isolating it
+is the most useful next piece of work on this suite.
 
 The case is left failing rather than loosened. A grader that is honestly soft and documented is
 worth more than one relaxed until it is green — the exact move this plugin refuses to make in the

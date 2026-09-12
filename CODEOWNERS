@@ -1,0 +1,8 @@
+# Default owner for everything.
+*                       @67696f
+
+# The sharp end: executable security controls and the suites that defend behaviour.
+/hooks/                 @67696f
+/tests/                 @67696f
+/evals/                 @67696f
+/skills/attack-catalog/  @67696f

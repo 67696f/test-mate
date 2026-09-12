@@ -158,6 +158,21 @@ Two settings are **enforced** by a `PreToolUse` hook the plugin ships, and hold 
 default** on purpose: a plugin hook fires for your own edits too, so switching it on unasked would
 break ordinary work. Turn it on for a run where you want the guarantee to be structural.
 
+## Development
+
+```bash
+python3 -m unittest discover -s tests    # 41 tests, ~1s, no credentials
+claude plugin eval .                     # 8 cases, ~4 min, ~$1.80
+```
+
+The unit tests cover the two hooks (including the bypasses you would try first) and the structural
+integrity of the prompt surface — that every reference resolves, no reference is orphaned, every
+command loads the config skill, every `Bash`-holding agent checks `forbidCommands`, and no report
+path is hardcoded. Those checks started as manual greps during the self-audit in `docs/`; they are
+tests now so they cannot rot.
+
+See `CONTRIBUTING.md` before changing a grader or a hook.
+
 ## How it works
 
 ```
@@ -192,15 +207,15 @@ tests mirror the repository's own fixture and idiom; `forbidCommands` is not wor
 unknown stack is asked about rather than invented; a Next.js Server Action is recognised as a public
 endpoint. See `evals/README.md`.
 
-Measured per case, three runs each: seven cases at 1.00. The eighth,
-`matches-existing-conventions`, is the unstable one — it has scored between 0.33 and 0.83 across
-runs, and a clean full-suite confirmation is still outstanding. Its soft half is the `skill-fired`
-grader, which asks whether TestMate actually engaged rather than whether the base model guessed the
-right style unaided.
+Measured per case, three runs each: seven cases at 1.00, and `matches-existing-conventions` at
+**0.83** across two independent measurements. Its `skill-fired` grader — does TestMate actually
+engage, or did the base model guess the right style unaided — now passes consistently; the residual
+is `criteria` failing roughly one run in three, cause not yet isolated.
 
 That case is left failing rather than loosened. Grinding a grader until it goes green is the exact
 move TestMate refuses to make in the code it tests, and an honestly red case is more informative
-than a quietly relaxed one.
+than a quietly relaxed one. CI is set to `--threshold 0.8` to accommodate it explicitly rather than
+silently.
 
 ### Adding a stack
 
