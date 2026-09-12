@@ -14,8 +14,8 @@ The rule that makes it useful:
 > source to do it either. It tells you which it is, with evidence.
 
 Works on any language or framework. First-class adapters ship for the JVM (Java / Kotlin / Spring
-Boot), Angular, Node / React / TypeScript, Python, Go, Rust and native C/C++; anything else falls
-back to convention inference from your existing tests.
+Boot), Next.js, Angular, Node / React / TypeScript, Python, Go, Rust and native C/C++; anything
+else falls back to convention inference from your existing tests.
 
 ## Install
 
