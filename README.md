@@ -37,11 +37,14 @@ Or from a local checkout:
 | Command | What it does |
 |---|---|
 | `/testmate:scan [path]` | Read-only. Stack profile, existing test posture, ranked risk hot-spots, proposed plan. Writes nothing. |
-| `/testmate:test [target] [--level]` | The main one. Generate → run → triage → report. Target is the project, a path, a file or `Class#method`. |
-| `/testmate:audit [path]` | Read-only vulnerability hunt. Ranked findings report, no test files. |
+| `/testmate:test [target] [--level] [--dry-run]` | The main one. Generate → run → triage → report. Target is the project, a path, a file or `Class#method`. `--dry-run` designs the cases and shows them without writing anything. |
+| `/testmate:audit [path] [--families ...]` | Read-only vulnerability hunt. Ranked findings report, no test files. `--families` narrows to e.g. `injection,authz`. |
 | `/testmate:harden [report\|path]` | Turns findings into refusal tests that prove each hole. The ones that fail are your confirmed bugs. |
-| `/testmate:debug <test\|bug> [--fix]` | Root-cause loop: minimal reproduction, bisect, one hypothesis at a time, causal chain. |
-| `/testmate:mutate [path] [--write]` | Mutation testing — does your suite actually catch bugs? Surviving mutants become new tests. |
+| `/testmate:debug <test\|bug> [--fix]` | Root-cause loop: minimal reproduction, bisect, one hypothesis at a time, causal chain. `--fix` permits a patch once the cause is proven. |
+| `/testmate:mutate [path] [--write] [--threshold N]` | Mutation testing — does your suite actually catch bugs? Surviving mutants become new tests. `--threshold` fails below N%. |
+
+`--dry-run` is the one to reach for on a first run against an unfamiliar codebase: it shows you every
+case TestMate would write, and touches nothing.
 
 ## Levels
 
