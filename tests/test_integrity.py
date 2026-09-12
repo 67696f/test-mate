@@ -231,5 +231,98 @@ class TestEvalSuite(unittest.TestCase):
                     self.assertIsNotNone(frontmatter(read(path)), f"{path} has no frontmatter")
 
 
+NUMBER_WORDS = {"one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+                "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12}
+
+
+def eval_case_dirs():
+    return sorted(d for d in os.listdir(os.path.join(ROOT, "evals"))
+                  if os.path.isdir(os.path.join(ROOT, "evals", d))
+                  and d != "results" and not d.startswith((".", "__")))
+
+
+def eval_scores_table():
+    """The `| Case | Was | Is | ... |` table in evals/README.md, as {case: is}."""
+    rows = re.findall(r"^\| `([a-z0-9-]+)` \| ([0-9.]+) \| ([0-9.]+) \|", read("evals/README.md"), re.M)
+    return {case: float(now) for case, _, now in rows}
+
+
+class TestDocsAgreeWithEachOther(unittest.TestCase):
+    """README, CONTRIBUTING and the PR template each describe the eval suite's state. They drifted
+    once: CONTRIBUTING said seven cases at 1.00 and one 'left failing on purpose' for a day after
+    README said all eight were fixed, and quoted a cost no recorded run had ever produced. For a
+    plugin whose premise is that reworded text silently removes behaviour, that is the defect class
+    it sells against, so the numbers are now derived rather than typed."""
+
+    TOP_LEVEL = ["README.md", "CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md"]
+
+    def test_eval_cost_and_time_are_stated_once(self):
+        # Both bash blocks annotate `claude plugin eval .`; the annotation must be identical so a
+        # remeasurement cannot land in one file and not the other.
+        comments = {}
+        for path in ["README.md", "CONTRIBUTING.md"]:
+            match = re.search(r"^claude plugin eval \.\s+# (.*)$", read(path), re.M)
+            self.assertIsNotNone(match, f"{path} has no annotated `claude plugin eval .` line")
+            comments[path] = match.group(1).split(";")[0].strip()
+        self.assertEqual(comments["README.md"], comments["CONTRIBUTING.md"])
+
+    def test_cost_range_matches_the_measured_range(self):
+        # evals/README.md is the source; it quotes the two full-suite runs to the cent.
+        low, high = re.search(r"ranged from \$([0-9.]+) to \$([0-9.]+)", read("evals/README.md")).groups()
+        low, high = float(low), float(high)
+        comment = re.search(r"^claude plugin eval \.\s+# (.*)$", read("README.md"), re.M).group(1)
+        doc_low, doc_high = map(int, re.search(r"\$(\d+)-(\d+)", comment).groups())
+        self.assertLessEqual(doc_low, low, "README quotes a floor above the cheapest recorded run")
+        self.assertGreaterEqual(doc_high, high, "README quotes a ceiling below the dearest recorded run")
+
+    def test_case_count_matches_the_suite(self):
+        count = len(eval_case_dirs())
+        word = {v: k for k, v in NUMBER_WORDS.items()}[count]
+        for path in self.TOP_LEVEL:
+            with self.subTest(path=path):
+                text = read(path).lower()
+                stated = set(re.findall(r"\b(\w+) cases\b", text))
+                stated |= {word} if re.search(rf"\ball {word} now score\b", text) else set()
+                wrong = {s for s in stated if s in NUMBER_WORDS or s.isdigit()} - {word, str(count)}
+                self.assertFalse(wrong, f"{path} counts the cases as {sorted(wrong)}; there are {count}")
+
+    def test_cases_at_one_matches_the_scores_table(self):
+        # The gate sentence in CONTRIBUTING and the PR template says how many cases sit at 1.00.
+        # evals/README.md's table is the record; every case not in the table is at 1.00 by omission.
+        scores = eval_scores_table()
+        self.assertTrue(scores, "evals/README.md has no scores table")
+        unknown = set(scores) - set(eval_case_dirs())
+        self.assertFalse(unknown, f"scores table names cases that do not exist: {sorted(unknown)}")
+        at_one = sum(1 for d in eval_case_dirs() if scores.get(d, 1.0) >= 1.0)
+        for path in ["CONTRIBUTING.md", ".github/PULL_REQUEST_TEMPLATE.md"]:
+            with self.subTest(path=path):
+                match = re.search(r"\b(all )?(\w+) cases at 1\.00", read(path))
+                self.assertIsNotNone(match, f"{path} does not state the eval gate as '<n> cases at 1.00'")
+                self.assertEqual(NUMBER_WORDS[match.group(2)], at_one)
+                if at_one == len(eval_case_dirs()):
+                    self.assertEqual(match.group(1), "all ", f"{path} should say 'all' when every case is at 1.00")
+
+    def test_no_case_is_described_as_currently_failing_when_the_table_says_it_passes(self):
+        scores = eval_scores_table()
+        for path in self.TOP_LEVEL:
+            text = read(path)
+            for case, now in scores.items():
+                if now < 1.0:
+                    continue
+                with self.subTest(path=path, case=case):
+                    for para in re.split(r"\n\s*\n", text):
+                        if f"`{case}`" in para:
+                            self.assertNotRegex(
+                                para, r"left failing|known.unstable|at its documented range|sits at 0\.",
+                                f"{path} describes `{case}` as failing; evals/README.md has it at {now}")
+
+    def test_unit_test_count_is_not_hardcoded(self):
+        # It was 41 in README while 62 ran. Counts rot; the runner prints the real one.
+        for path in self.TOP_LEVEL:
+            with self.subTest(path=path):
+                found = re.search(r"\b\d+ tests\b", read(path))
+                self.assertIsNone(found, f"{path} hardcodes a unit-test count: {found and found.group(0)!r}")
+
+
 if __name__ == "__main__":
     unittest.main(verbosity=2)

@@ -5,7 +5,7 @@
 ## Checks
 
 - [ ] `python3 -m unittest discover -s tests` is green
-- [ ] `claude plugin eval .` does not regress (7 cases at 1.00; `matches-existing-conventions` within its documented range)
+- [ ] `claude plugin eval .` does not regress (all eight cases at 1.00; measure at `--runs 6` before recording a number)
 
 ## If an eval case changed score
 

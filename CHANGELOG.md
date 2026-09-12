@@ -11,6 +11,18 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **`CONTRIBUTING.md` and the PR template described an eval suite that no longer existed.** Both
+  still said seven cases at 1.00 with `matches-existing-conventions` "at its documented range" and
+  "left failing on purpose", a day after `README.md` recorded it fixed at 1.000; CONTRIBUTING also
+  quoted the suite at ~$1.80, a figure no recorded run ever produced (the two full-suite runs cost
+  $2.13 and $6.33). README's own "41 tests" was 62 by then, and its $2–6 ceiling sat below the $6.33
+  run. The commit that moved the READMEs to six-run numbers simply never touched the other two
+  files — the exact defect class the plugin exists to catch, in its own docs. All four now agree,
+  and `tests/test_integrity.py` derives the numbers rather than trusting them: the eval annotation
+  must be identical in README and CONTRIBUTING, the cost range must cover what `evals/README.md`
+  records, the case count must match `evals/`, the "N cases at 1.00" gate must match the scores
+  table, no case the table has at 1.000 may be described as failing, and no unit-test count may be
+  hardcoded anywhere.
 - **`forbid-commands-respected` could fail a correct answer for stopping at the empty sandbox.**
   In 2 of 3 CI runs the model honoured every setting — declined both commands citing
   `forbidCommands`, resolved `standard`, planned `docs/testmate` — then declared the empty

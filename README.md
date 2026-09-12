@@ -169,8 +169,8 @@ break ordinary work. Turn it on for a run where you want the guarantee to be str
 ## Development
 
 ```bash
-python3 -m unittest discover -s tests    # 41 tests, ~1s, no credentials
-claude plugin eval .                     # 8 cases, ~4.5 min, $2-6 depending on run length
+python3 -m unittest discover -s tests    # ~1s, no credentials
+claude plugin eval .                     # 8 cases, ~4.5 min, $2-7 depending on run length
 ```
 
 The unit tests cover the two hooks (including the bypasses you would try first) and the structural

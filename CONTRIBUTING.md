@@ -8,12 +8,12 @@ Please treat them as the gate, not as paperwork.
 
 ```bash
 python3 -m unittest discover -s tests -v    # ~1s, no credentials needed
-claude plugin eval .                        # ~4 min, ~$1.80, needs your Claude credential
+claude plugin eval .                        # 8 cases, ~4.5 min, $2-7 depending on run length; needs your Claude credential
 ```
 
-The unit tests must be green. The eval suite must not regress: seven cases at 1.00 and
-`matches-existing-conventions` at its documented range. If a case drops, find out **why** before
-touching the grader.
+The unit tests must be green. The eval suite must not regress: all eight cases at 1.00, measured
+at six runs per case, not the default three. If a case drops, find out **why** before touching the
+grader.
 
 ## The rule that governs changes
 
@@ -27,8 +27,12 @@ suite, and the fourth and fifth were real defects in the plugin. Both outcomes a
 which without reading the trace is not.
 
 Never loosen a grader to reach green. A grader that is honestly soft and documented is worth more
-than one relaxed until it passes — see `matches-existing-conventions`, which is left failing on
-purpose.
+than one relaxed until it passes. `matches-existing-conventions` is the worked example of both
+halves. It went from 0.000 to 1.000 with its `criteria` grader untouched: the prompt was missing
+the contract it asked for, and a rule the case depended on sat in a file the model could not reach.
+Its `skill-fired` grader *was* down-weighted to 0.05 — but as a diagnostic that says nothing about
+output quality, and the grader file says so in as many words. `evals/README.md` records both. If a
+case is genuinely soft, say so there, with the number; do not leave it implied here.
 
 ## Adding a stack adapter
 
