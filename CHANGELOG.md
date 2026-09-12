@@ -11,6 +11,14 @@ as one.
 ## [Unreleased]
 
 ### Fixed
+- **The narrowed `forbidCommands` matcher had a newline bypass — introduced here, one commit
+  earlier.** It normalised whitespace *before* splitting into segments, so `echo "starting"` and a
+  `git push` on the next line collapsed into one segment led by an inert command, the exemption
+  fired, and the push was allowed. Splitting now happens on the raw command and whitespace is
+  normalised per segment. A backslash-newline is joined first, because that is one command
+  continued, not two. The pre-existing test asserting `mvn` + newline + `deploy` must be DENIED
+  encoded the same wrong belief — those are two commands and neither deploys — and now asserts the
+  continuation form instead. Twenty-two probes cover both directions.
 - **Three stale or wrong details in the stack adapters**, found by reading all 1,333 lines of
   reference content rather than only checking that the files resolve. `angular.md` built its
   fixture on `HttpClientTestingModule`, deprecated since Angular 17 in favour of

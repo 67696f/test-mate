@@ -118,7 +118,8 @@ class TestForbidCommands(GuardTestCase):
         self.write_config({"forbidCommands": ["mvn deploy"]})
         self.assertEqual(self.decide(command="mvn    deploy")[0], DENY)
         self.assertEqual(self.decide(command="mvn\tdeploy")[0], DENY)
-        self.assertEqual(self.decide(command="mvn \n deploy")[0], DENY)
+        # A backslash-newline is a continuation: still one `mvn deploy`.
+        self.assertEqual(self.decide(command="mvn \\\n deploy")[0], DENY)
 
     def test_case_does_not_evade(self):
         self.write_config({"forbidCommands": ["mvn deploy"]})
@@ -184,6 +185,41 @@ class TestForbidCommands(GuardTestCase):
         ]:
             with self.subTest(command=command):
                 self.assertEqual(self.decide(command=command)[0], DENY)
+
+    def test_newline_separates_commands(self):
+        """A newline is a command separator and must survive whitespace normalisation.
+
+        The first version of the segment matcher normalised whitespace BEFORE splitting,
+        which folded `echo "starting"` and a `git push` on the next line into one
+        echo-led segment and let the push through. A real bypass, shipped for a night.
+        """
+        self.write_config({"forbidCommands": ["git push", "mvn deploy"]})
+        for command in [
+            'echo "starting"\ngit push',
+            'echo start\ngit push origin main',
+            'printf x\n\ngit push',
+            'echo a\r\nmvn deploy',
+            'grep foo bar.txt\n  git push',
+        ]:
+            with self.subTest(command=command):
+                self.assertEqual(self.decide(command=command)[0], DENY)
+
+    def test_multiline_command_still_matches_reformatted_pattern(self):
+        """Normalising per segment must not lose the reformatting protection."""
+        self.write_config({"forbidCommands": ["mvn deploy"]})
+        self.assertEqual(self.decide(command="mvn \\\n  deploy")[0], DENY)   # continuation
+        self.assertEqual(self.decide(command="mvn \\\r\n  deploy")[0], DENY)
+        self.assertEqual(self.decide(command="mvn\tdeploy")[0], DENY)
+
+    def test_bare_newline_is_a_separator_not_whitespace(self):
+        """`mvn` then `deploy` on the next line runs two commands; neither is `mvn deploy`.
+
+        The previous matcher normalised whitespace first and denied this, which was
+        over-matching -- and the same belief, applied to `echo x` + newline + `git push`,
+        produced the bypass. A newline separates; a backslash-newline continues.
+        """
+        self.write_config({"forbidCommands": ["mvn deploy"]})
+        self.assertEqual(self.decide(command="mvn\ndeploy")[0], ALLOW)
 
     def test_interpreter_is_not_inert(self):
         """bash/sh run their arguments, so the exemption must not reach them."""

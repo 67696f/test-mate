@@ -37,6 +37,10 @@ def split_segments(command):
     splits too -- which errs toward MORE segments and therefore more chances to match, the
     safe direction for a guard.
     """
+    # A backslash before the newline is a line continuation: one command written over
+    # two lines, not two commands. Join those first, so `mvn \` + newline + `deploy`
+    # is still `mvn deploy`. A bare newline, by contrast, IS a separator and stays one.
+    command = command.replace("\\\r\n", " ").replace("\\\n", " ")
     segments = [command]
     for sep in SEPARATORS:
         nxt = []
@@ -70,13 +74,19 @@ def segment_matches(segment, pattern):
 def matches(command, pattern):
     """True if any command the line runs matches the forbidden entry.
 
+    Takes the RAW command. Whitespace is normalised per segment, after splitting --
+    never before. Normalising first turns a newline into a space, which merges
+    `echo "starting"` and `git push` on the next line into one segment led by an
+    inert command, and the exemption then lets the push through.
+
     Matching stays substring-based within each segment: an entry of `git push` still
     blocks `git push --force origin main`, and still blocks it inside `bash -c '...'`,
     because bash is not an inert command. What it no longer blocks is the pattern
     appearing purely as data -- `echo "git push"`, `grep -r "npm publish" docs/`.
     """
     if any(ch in pattern for ch in "*?["):
-        if fnmatch.fnmatch(command, pattern) or fnmatch.fnmatch(command, f"*{pattern}*"):
+        flat = " ".join(command.split())
+        if fnmatch.fnmatch(flat, pattern) or fnmatch.fnmatch(flat, f"*{pattern}*"):
             return True
     return any(segment_matches(seg, pattern) for seg in split_segments(command))
 
@@ -148,14 +158,13 @@ def main():
     if not forbidden:
         approve_silently()
 
-    # Normalise whitespace so that a reformatted command cannot slip past a pattern.
-    normalised = " ".join(str(command).split())
-
+    # The raw command goes to the matcher; it normalises whitespace per segment AFTER
+    # splitting, so a newline still separates commands (see matches()).
     for entry in forbidden:
         if not isinstance(entry, str) or not entry.strip():
             continue
         pattern = " ".join(entry.split())
-        matched = matches(normalised, pattern)
+        matched = matches(str(command), pattern)
         if matched:
             emit("deny",
                  f"TestMate blocked this command: it matches forbidCommands entry "
