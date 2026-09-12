@@ -1,6 +1,6 @@
 ---
 name: test-conventions
-description: Learn and match a repository's existing test style — naming, display names, fixtures and base classes, assertion library, parameterization, structure — so generated tests read as if the team wrote them. Load BEFORE writing or adding any test, spec or test case to a project that already has tests, and whenever the request mentions matching, following or fitting the existing tests, style or conventions.
+description: Learn and match a repository's existing test style — naming, display names, fixtures and base classes, assertion library, parameterization, structure — so generated tests read as if the team wrote them. Load BEFORE writing or adding any test, spec or test case to a project that already has tests. Triggers on any request to match, follow or fit existing tests, style or conventions, AND on any request that merely SHOWS or describes what the existing tests look like — "every existing test file looks like this", "here is how we write tests", "our tests extend X", a quoted sample test, a named base class or fixture, or a house rule stated in passing. A shown example is a conventions request even when no word like "match" or "convention" appears.
 ---
 
 # Learning the repository's test conventions
@@ -59,5 +59,13 @@ test, and safety cases collected in their own file. Every new test must match th
    know what the unit guarantees.
 4. **No new dependency without asking.** If an adversarial case needs a library the project does
    not have (a property-based or container library), say so and ask before touching the build file.
-5. **Greenfield fallback.** With no existing tests, take defaults from `stack-adapters`, then state
+5. **No control flow in a test body.** No `if`, no loop, no `switch`, no `try/catch` used as flow.
+   An `if` means two tests, or an assertion you are afraid to make. A loop over inputs means a
+   **parameterized test** — `@ParameterizedTest` with `@EnumSource` / `@MethodSource` / `@CsvSource`,
+   `@pytest.mark.parametrize`, a table-driven subtest, `it.each` — written in whichever of those the
+   repo already uses. A loop hides which input failed and stops at the first failure, so it reports
+   one defect where there may be five. This holds even for the case that looks too small to bother
+   with: sweeping an enum's values, or a handful of bad strings, is exactly the shape that belongs in
+   a parameterized test.
+6. **Greenfield fallback.** With no existing tests, take defaults from `stack-adapters`, then state
    the conventions you chose in the report so the team can veto them once rather than per file.
